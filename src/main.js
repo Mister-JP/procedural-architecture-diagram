@@ -67,6 +67,17 @@ function setGlobalBackground(color) {
   document.body.style.background = color;
 }
 
+function isEditableDomTarget(target) {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  if (target.isContentEditable) {
+    return true;
+  }
+  const tagName = target.tagName;
+  return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
+}
+
 const startingDocument = normalizeDocument(defaultArchitectureDocument);
 const initialCameraPosition = startingDocument.scene.cameraPosition;
 
@@ -97,6 +108,7 @@ const uiState = {
 };
 
 let duplicateButton;
+let undoButton;
 let moveModeButton;
 let rotateModeButton;
 let curveHandleStatus;
@@ -109,6 +121,7 @@ let inspectorActionButton;
 let inspectorDeleteButton;
 let preview;
 let importInput;
+let backgroundInput;
 let viewModeStatus;
 let viewPlaneButtons = {};
 
@@ -116,6 +129,13 @@ function applyTransformModeButtonState(mode) {
   const isMove = mode === "translate";
   moveModeButton.classList.toggle("active", isMove);
   rotateModeButton.classList.toggle("active", !isMove);
+}
+
+function applyUndoButtonState(editor) {
+  if (!undoButton) {
+    return;
+  }
+  undoButton.disabled = !editor.canUndo();
 }
 
 function syncViewPlaneControls(editor) {
@@ -885,6 +905,12 @@ editor = new ArchitectureEditor({
   onDocumentChange: (documentConfig) => {
     uiState.latestDocument = clone(documentConfig);
     setGlobalBackground(documentConfig.scene.background);
+    if (backgroundInput) {
+      backgroundInput.value = documentConfig.scene.background;
+    }
+  },
+  onHistoryChange: () => {
+    applyUndoButtonState(editor);
   }
 });
 
@@ -939,6 +965,13 @@ duplicateButton.addEventListener("click", () => {
 });
 duplicateButton.disabled = !editor.getSelectedElement();
 
+undoButton = createButton("Undo (Cmd/Ctrl+Z)");
+undoButton.disabled = true;
+undoButton.addEventListener("click", () => {
+  editor.undo();
+});
+applyUndoButtonState(editor);
+
 const transformSection = document.createElement("div");
 transformSection.className = "button-row";
 
@@ -970,7 +1003,7 @@ sceneHeading.className = "section-title";
 sceneHeading.textContent = "Scene";
 
 const backgroundRow = createFieldRow("Background");
-const backgroundInput = document.createElement("input");
+backgroundInput = document.createElement("input");
 backgroundInput.className = "field-input color-input";
 backgroundInput.type = "color";
 backgroundInput.value = startingDocument.scene.background;
@@ -1068,7 +1101,7 @@ importInput.addEventListener("change", async () => {
     const text = await file.text();
     const parsed = JSON.parse(text);
     const normalized = normalizeDocument(parsed);
-    editor.loadDocument(normalized, { selectFirst: true, emitDocumentChange: true });
+    editor.loadDocument(normalized, { selectFirst: true, emitDocumentChange: true, captureUndo: true });
     backgroundInput.value = normalized.scene.background;
     setGlobalBackground(normalized.scene.background);
   } catch (error) {
@@ -1081,7 +1114,7 @@ importInput.addEventListener("change", async () => {
 const leftHelp = document.createElement("p");
 leftHelp.className = "panel-help";
 leftHelp.textContent =
-  "Double-click a rotate axis to snap 90°. Move mode shows temporary alignment guides and snapping.";
+  "Undo with Cmd/Ctrl+Z. Double-click a rotate axis to snap 90°. Move mode shows temporary alignment guides and snapping.";
 
 leftPanel.append(
   leftHeader,
@@ -1090,6 +1123,7 @@ leftPanel.append(
   createLabelButton,
   createFrustumButton,
   duplicateButton,
+  undoButton,
   transformSection,
   fitViewButton,
   sceneSection,
@@ -1285,3 +1319,16 @@ document.body.append(leftDock, rightDock, viewGizmo, importInput);
 preview = new ElementPreview(previewViewport);
 openCreateInspector(ELEMENT_TYPES.tensor, editor);
 app.start();
+
+window.addEventListener("keydown", (event) => {
+  const key = typeof event.key === "string" ? event.key.toLowerCase() : "";
+  const isUndoKey = (event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && key === "z";
+
+  if (!isUndoKey || isEditableDomTarget(event.target)) {
+    return;
+  }
+
+  if (editor.undo()) {
+    event.preventDefault();
+  }
+});

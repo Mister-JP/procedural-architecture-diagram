@@ -328,7 +328,7 @@ canvas {
 
 .view-gizmo {
   position: fixed;
-  right: 18px;
+  left: 18px;
   bottom: 18px;
   z-index: 35;
   width: min(214px, calc(100vw - 36px));
@@ -422,7 +422,7 @@ canvas {
   }
 
   .view-gizmo {
-    right: 10px;
+    left: 10px;
     bottom: 10px;
     width: min(206px, calc(100vw - 20px));
   }

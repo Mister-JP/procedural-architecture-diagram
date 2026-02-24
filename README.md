@@ -11,6 +11,7 @@ Interactive Three.js editor for composing neural-network style diagrams from reu
 - Move and rotate any selected element in canvas.
 - Re-open and edit any element by clicking it.
 - Duplicate selected elements.
+- Undo recent edits with `Cmd/Ctrl+Z` or the Undo button.
 - Toggle (hide/show) both side panels to maximize canvas space.
 - Export the complete architecture to JSON and import it later.
 

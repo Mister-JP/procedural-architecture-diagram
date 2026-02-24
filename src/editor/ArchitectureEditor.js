@@ -57,6 +57,7 @@ const ROTATION_AXIS_SET = new Set(["X", "Y", "Z"]);
 const RIGHT_ANGLE_RADIANS = Math.PI * 0.5;
 const ROTATE_DOUBLE_CLICK_WINDOW_MS = 340;
 const ALIGNMENT_SNAP_THRESHOLD = 2;
+const UNDO_HISTORY_LIMIT = 120;
 const AXIS_KEYS = ["x", "y", "z"];
 const ANCHOR_TYPES = ["min", "center", "max"];
 
@@ -82,10 +83,11 @@ function toVector3(values) {
 }
 
 export class ArchitectureEditor {
-  constructor({ app, onSelectionChange, onDocumentChange }) {
+  constructor({ app, onSelectionChange, onDocumentChange, onHistoryChange }) {
     this.app = app;
     this.onSelectionChange = onSelectionChange;
     this.onDocumentChange = onDocumentChange;
+    this.onHistoryChange = onHistoryChange;
 
     this.document = createDefaultDocument();
     this.elements = new Map();
@@ -98,6 +100,9 @@ export class ArchitectureEditor {
     this.activePlane = null;
     this.saved3DView = null;
     this.alignmentSnapThreshold = ALIGNMENT_SNAP_THRESHOLD;
+    this.undoStack = [];
+    this.isRestoringHistory = false;
+    this.transformUndoCaptured = false;
 
     this.rootGroup = new THREE.Group();
     this.app.add(this.rootGroup);
@@ -114,6 +119,7 @@ export class ArchitectureEditor {
     this.setupSelectionEvents();
 
     this.loadDocument(createDefaultDocument(), { selectFirst: true, emitDocumentChange: false });
+    this.emitHistoryChange();
   }
 
   createCurveHandle() {
@@ -200,7 +206,20 @@ export class ArchitectureEditor {
     this.selectElement(elementId);
   }
 
-  loadDocument(rawDocument, { selectFirst = false, emitDocumentChange = true } = {}) {
+  loadDocument(
+    rawDocument,
+    {
+      selectFirst = false,
+      selectedId = null,
+      emitDocumentChange = true,
+      captureUndo = false,
+      preserveCamera = false
+    } = {}
+  ) {
+    if (captureUndo) {
+      this.recordUndoSnapshot();
+    }
+
     const normalized = normalizeDocument(rawDocument);
 
     this.document = {
@@ -216,11 +235,16 @@ export class ArchitectureEditor {
     }
 
     this.app.setBackground(this.document.scene.background, false);
-    this.app.camera.position.set(...this.document.scene.cameraPosition);
-    this.app.controls.target.set(0, 0, 0);
-    this.app.controls.update();
 
-    if (selectFirst) {
+    if (!preserveCamera) {
+      this.app.camera.position.set(...this.document.scene.cameraPosition);
+      this.app.controls.target.set(0, 0, 0);
+      this.app.controls.update();
+    }
+
+    if (selectedId && this.elements.has(selectedId)) {
+      this.selectElement(selectedId, { emitSelection: true });
+    } else if (selectFirst) {
       const first = this.elements.keys().next().value ?? null;
       this.selectElement(first, { emitSelection: true });
     } else {
@@ -254,6 +278,78 @@ export class ArchitectureEditor {
     this.clearAlignmentGuides();
   }
 
+  clearUndoHistory() {
+    this.undoStack = [];
+    this.emitHistoryChange();
+  }
+
+  canUndo() {
+    return this.undoStack.length > 0;
+  }
+
+  createHistoryEntry() {
+    return {
+      document: this.exportDocument(),
+      selectedId: this.selectedId
+    };
+  }
+
+  historyEntriesEqual(a, b) {
+    if (!a || !b) {
+      return false;
+    }
+    if ((a.selectedId ?? null) !== (b.selectedId ?? null)) {
+      return false;
+    }
+    return JSON.stringify(a.document) === JSON.stringify(b.document);
+  }
+
+  recordUndoSnapshot() {
+    if (this.isRestoringHistory) {
+      return false;
+    }
+
+    const snapshot = this.createHistoryEntry();
+    const latest = this.undoStack[this.undoStack.length - 1] ?? null;
+
+    if (this.historyEntriesEqual(snapshot, latest)) {
+      return false;
+    }
+
+    this.undoStack.push(snapshot);
+    if (this.undoStack.length > UNDO_HISTORY_LIMIT) {
+      this.undoStack.shift();
+    }
+    this.emitHistoryChange();
+    return true;
+  }
+
+  undo() {
+    if (!this.canUndo()) {
+      return false;
+    }
+
+    const previous = this.undoStack.pop();
+    this.emitHistoryChange();
+
+    if (!previous) {
+      return false;
+    }
+
+    this.isRestoringHistory = true;
+    try {
+      this.loadDocument(previous.document, {
+        selectedId: previous.selectedId,
+        emitDocumentChange: true,
+        preserveCamera: true
+      });
+    } finally {
+      this.isRestoringHistory = false;
+    }
+
+    return true;
+  }
+
   addElementInstance(elementConfig, { select = true, emitDocumentChange = true } = {}) {
     const normalized = sanitizeElementConfig(elementConfig);
 
@@ -280,6 +376,8 @@ export class ArchitectureEditor {
   }
 
   createElementFromTemplate(templateConfig, { offsetBySelection = true } = {}) {
+    this.recordUndoSnapshot();
+
     const nextConfig = clone(templateConfig);
     nextConfig.id = createElementId(nextConfig.type);
 
@@ -310,17 +408,24 @@ export class ArchitectureEditor {
     }
 
     const current = this.elements.get(this.selectedId);
+    const currentDocumentElement = current.toDocumentElement();
     const merged = {
-      ...clone(current.toDocumentElement()),
+      ...clone(currentDocumentElement),
       ...clone(nextConfig),
       id: this.selectedId,
       type: current.type,
-      transform: clone(current.toDocumentElement().transform)
+      transform: clone(currentDocumentElement.transform)
     };
 
     const normalized = sanitizeElementConfig(merged);
     normalized.id = this.selectedId;
     normalized.transform = merged.transform;
+
+    if (JSON.stringify(currentDocumentElement) === JSON.stringify(normalized)) {
+      return normalized;
+    }
+
+    this.recordUndoSnapshot();
 
     current.update(normalized);
     this.refreshSelectionVisualization();
@@ -521,6 +626,8 @@ export class ArchitectureEditor {
       return false;
     }
 
+    this.recordUndoSnapshot();
+
     selected.group.rotation[axisKey] = snappedAngle;
     selected.syncTransformFromGroup();
 
@@ -536,9 +643,12 @@ export class ArchitectureEditor {
 
   handleTransformDraggingChanged(isDragging) {
     if (!isDragging) {
+      this.transformUndoCaptured = false;
       this.endTransformDragSession();
       return;
     }
+
+    this.transformUndoCaptured = false;
 
     if (this.transformControls.getMode() !== "translate") {
       return;
@@ -810,6 +920,8 @@ export class ArchitectureEditor {
       return null;
     }
 
+    this.recordUndoSnapshot();
+
     const duplicated = duplicateElementConfig(selected.toDocumentElement());
     return this.addElementInstance(duplicated, { select: true, emitDocumentChange: true });
   }
@@ -818,6 +930,8 @@ export class ArchitectureEditor {
     if (!this.selectedId || !this.elements.has(this.selectedId)) {
       return false;
     }
+
+    this.recordUndoSnapshot();
 
     const targetId = this.selectedId;
     const targetElement = this.elements.get(targetId);
@@ -853,6 +967,17 @@ export class ArchitectureEditor {
       return;
     }
 
+    if (this.isDraggingTransform && !this.transformUndoCaptured) {
+      const isCurveHandleDrag =
+        attachedObject === this.curveHandle && this.curveHandleEnabled && selected.isCurved?.();
+      const isElementDrag = attachedObject === selected.group;
+
+      if (isCurveHandleDrag || isElementDrag) {
+        this.recordUndoSnapshot();
+        this.transformUndoCaptured = true;
+      }
+    }
+
     if (attachedObject === this.curveHandle && this.curveHandleEnabled && selected.isCurved?.()) {
       selected.setControlPointFromWorld(this.curveHandle.getWorldPosition(new THREE.Vector3()));
       this.curveHandle.position.copy(selected.getControlPointWorld());
@@ -879,6 +1004,11 @@ export class ArchitectureEditor {
   }
 
   setBackground(backgroundColor) {
+    if (this.document.scene.background === backgroundColor) {
+      return;
+    }
+
+    this.recordUndoSnapshot();
     this.document.scene.background = backgroundColor;
     this.app.setBackground(backgroundColor, true);
     this.emitDocumentChange();
@@ -958,5 +1088,15 @@ export class ArchitectureEditor {
       return;
     }
     this.onDocumentChange(this.exportDocument());
+  }
+
+  emitHistoryChange() {
+    if (!this.onHistoryChange) {
+      return;
+    }
+    this.onHistoryChange({
+      canUndo: this.canUndo(),
+      undoDepth: this.undoStack.length
+    });
   }
 }
