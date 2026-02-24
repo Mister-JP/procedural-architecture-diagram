@@ -1,12 +1,24 @@
-# U-Net Input Layer Demo
+# CNN Volume Pipeline Visualization
 
-Fresh baseline app with a single U-Net input layer visualization.
+Three.js app that visualizes a multi-stage convolution pipeline with reusable tensor and kernel components.
 
 ## Current scope
 
-- One diagram card
-- One layer: `Input Layer`
-- Input tensor shape: `23 x 128 x 128`
+- Input tensor: `23 x 128 x 128`
+- Stage 1: `32` kernels of `23 x 3 x 3` -> output `32 x 128 x 128`
+- Stage 2: `32` kernels of `32 x 3 x 3` -> output `32 x 128 x 128`
+- Highlighted tunnels: input patch -> highlighted kernel -> highlighted output pixel
+
+## Project structure
+
+- `src/core/SceneApp.js`: scene/renderer/camera lifecycle
+- `src/core/TensorVolume.js`: reusable voxel tensor renderer
+- `src/core/ConvolutionStageVisualization.js`: reusable convolution stage visualizer
+- `src/core/tunnel-utils.js`: translucent tunnel geometry helpers
+- `src/core/color-utils.js`: color gradient helpers
+- `src/config/pipeline-config.js`: declarative pipeline + style config
+
+Detailed architecture notes: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
 
 ## Run
 
