@@ -1,33 +1,46 @@
 # Architecture Guide
 
 ## Overview
-The visualization is split into composable modules with clear ownership:
-- `src/core/SceneApp.js`: App shell for renderer, scene, camera, controls, lights, and animation loop.
-- `src/core/TensorVolume.js`: Reusable voxel tensor renderer for any `[C, H, W]` block.
-- `src/core/ConvolutionStageVisualization.js`: Kernel bank and tunnel visualization between one input/output tensor pair.
-- `src/core/tensor-math.js`: Shared tensor/kernel span math used by pipeline and stage layout.
-- `src/core/tunnel-utils.js`: Shared geometry helpers for translucent tunnel planes.
-- `src/core/label-utils.js`: Shared camera-facing text label helper used by tensor/transition annotations.
-- `src/core/color-utils.js`: Shared gradient/color utilities.
-- `src/config/pipeline-config.js`: Declarative pipeline and visual style configuration.
+The app is now a JSON-driven editor rather than a hardcoded CNN pipeline renderer.
+
+Core modules:
+- `src/core/SceneApp.js`: renderer/camera/controls shell.
+- `src/editor/ArchitectureEditor.js`: scene element orchestration, selection, transform controls, import/export.
+- `src/editor/schema.js`: normalized document schema and defaults.
+- `src/editor/elements/BaseElement.js`: common element lifecycle contract.
+- `src/editor/elements/TensorElement.js`: voxel tensor element built on `TensorVolume`.
+- `src/editor/elements/ArrowElement.js`: 3D/2D/dotted/curved arrows.
+- `src/editor/elements/LabelElement.js`: configurable sprite labels.
+- `src/editor/ElementPreview.js`: inspector-side preview renderer.
 
 ## OOP Design Decisions
-- Single Responsibility: each class handles one concern (scene lifecycle, tensor rendering, stage rendering).
-- Composition over inheritance: the pipeline is composed by wiring `TensorVolume` and `ConvolutionStageVisualization` instances.
-- Encapsulation: geometric and layout calculations are internal methods, while external code only uses stable public APIs.
+- Single responsibility:
+  - Scene lifecycle in `SceneApp`.
+  - Editing orchestration in `ArchitectureEditor`.
+  - Geometry/rendering in per-element classes.
+- Composition over inheritance:
+  - Editor composes polymorphic element instances via factory + base contract.
+- Encapsulation:
+  - Element internals own geometry construction and serialization boundaries.
 
-## Documentation Standards Used
-1. Public API JSDoc
-- Constructors and exported functions have JSDoc for parameters and return values.
+## Data Contract
+- Source of truth is a versioned JSON document (`scene` + `elements[]`).
+- Every element has:
+  - `id`
+  - `type` (`tensor`, `arrow`, `label`)
+  - `name`
+  - `transform` (`position`, `rotation`)
+  - `data` (type-specific payload)
+- `schema.js` normalizes imports, clamps invalid values, and injects defaults.
 
-2. Architectural docs next to code
-- This file documents module boundaries and intended responsibilities.
+## Interaction Model
+- Raycast click selection resolves owning element IDs from scene nodes.
+- `TransformControls` provides translate/rotate manipulation of selected elements.
+- Curved arrows expose an optional in-canvas control handle for control-point editing.
 
-3. Declarative configuration
-- `pipeline-config.js` acts as a living specification for shapes, colors, and stage topology.
-
-## How to Extend
-- Add a new convolution stage: append a `createConvolutionStage(...)` call to `PIPELINE_CONFIG.stages`.
-- Stage naming aligns with CNN terminology: `outputChannels`, `kernelSize`, and optional `kernelCount` (defaults to `outputChannels`).
-- Change tensor appearance globally: edit `SHARED_VOXEL_GEOMETRY`.
-- Change gradient schemes: swap `createGradientResolver(start, end)` values.
+## Extendability
+- Add a new element type by:
+  1. Defining defaults/normalization in `schema.js`.
+  2. Creating a new `*Element` class extending `BaseElement`.
+  3. Registering it in `ElementFactory.js`.
+  4. Adding inspector controls in `main.js`.

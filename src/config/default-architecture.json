@@ -1,0 +1,78 @@
+{
+  "version": 1,
+  "scene": {
+    "background": "#0f1624",
+    "cameraPosition": [0, 0, 260]
+  },
+  "elements": [
+    {
+      "id": "tensor-seed",
+      "type": "tensor",
+      "name": "Input Tensor",
+      "transform": {
+        "position": [0, 0, 0],
+        "rotation": [0, 0, 0]
+      },
+      "data": {
+        "shape": [3, 3, 3],
+        "voxel": {
+          "pixelSize": 2,
+          "pixelDepth": 1.2,
+          "gap": 0.25,
+          "layerGap": 0.35
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 1,
+          "borderColor": "#111111",
+          "borderOpacity": 1
+        }
+      }
+    },
+    {
+      "id": "arrow-seed",
+      "type": "arrow",
+      "name": "Flow Arrow",
+      "transform": {
+        "position": [48, 0, 0],
+        "rotation": [0, 0, 0]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 38,
+        "thickness": 1.2,
+        "headLength": 7,
+        "headWidth": 3.4,
+        "color": "#9cd8ff",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [0, 12, 0]
+      }
+    },
+    {
+      "id": "label-seed",
+      "type": "label",
+      "name": "Layer Label",
+      "transform": {
+        "position": [0, -22, 0],
+        "rotation": [0, 0, 0]
+      },
+      "data": {
+        "text": "Conv 3x3",
+        "fontFamily": "Arial",
+        "fontSize": 52,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 9
+      }
+    }
+  ]
+}
