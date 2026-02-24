@@ -99,6 +99,7 @@ export class ArchitectureEditor {
     this.transformControls = new TransformControls(this.app.camera, this.app.renderer.domElement);
     this.transformControls.setMode(this.transformMode);
     this.transformControls.setSize(0.85);
+    this.transformControlsHelper = this.transformControls.getHelper();
 
     this.transformControls.addEventListener("dragging-changed", (event) => {
       this.isDraggingTransform = event.value;
@@ -116,7 +117,7 @@ export class ArchitectureEditor {
       this.app.renderFrame();
     });
 
-    this.app.add(this.transformControls);
+    this.app.add(this.transformControlsHelper);
   }
 
   setupSelectionEvents() {
@@ -128,7 +129,8 @@ export class ArchitectureEditor {
     this.app.renderer.domElement.removeEventListener("pointerdown", this.onPointerDown);
     this.clearElements();
     this.transformControls.detach();
-    this.app.scene.remove(this.transformControls);
+    this.app.scene.remove(this.transformControlsHelper);
+    this.transformControls.dispose();
     this.app.scene.remove(this.curveHandle);
   }
 
