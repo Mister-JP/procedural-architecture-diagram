@@ -82,6 +82,21 @@ function toVector3(values) {
   return new THREE.Vector3(values[0], values[1], values[2]);
 }
 
+function arraysEqual(left, right) {
+  if (left === right) {
+    return true;
+  }
+  if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+    return false;
+  }
+  for (let index = 0; index < left.length; index += 1) {
+    if (left[index] !== right[index]) {
+      return false;
+    }
+  }
+  return true;
+}
+
 export class ArchitectureEditor {
   constructor({ app, onSelectionChange, onDocumentChange, onHistoryChange }) {
     this.app = app;
@@ -92,6 +107,7 @@ export class ArchitectureEditor {
     this.document = createDefaultDocument();
     this.elements = new Map();
     this.selectedId = null;
+    this.selectedIds = new Set();
     this.transformMode = "translate";
     this.curveHandleEnabled = false;
     this.isDraggingTransform = false;
@@ -113,7 +129,7 @@ export class ArchitectureEditor {
     this.raycaster = new THREE.Raycaster();
     this.pointer = new THREE.Vector2();
 
-    this.selectionHelper = null;
+    this.selectionHelpers = [];
     this.createCurveHandle();
     this.setupTransformControls();
     this.setupSelectionEvents();
@@ -154,8 +170,8 @@ export class ArchitectureEditor {
     });
 
     this.transformControls.addEventListener("change", () => {
-      if (this.selectionHelper) {
-        this.selectionHelper.update();
+      if (this.selectionHelpers.length > 0) {
+        this.updateSelectionHelpers();
       }
       this.app.renderFrame();
     });
@@ -196,14 +212,21 @@ export class ArchitectureEditor {
 
     this.raycaster.setFromCamera(this.pointer, this.app.camera);
     const intersections = this.raycaster.intersectObjects(this.rootGroup.children, true);
+    const shouldToggleSelection = event.shiftKey;
 
     if (intersections.length === 0) {
-      this.selectElement(null);
+      if (!shouldToggleSelection) {
+        this.selectElement(null);
+      }
       return;
     }
 
     const elementId = resolveBestElementIdFromIntersections(intersections);
-    this.selectElement(elementId);
+    if (shouldToggleSelection) {
+      this.toggleElementSelection(elementId);
+    } else {
+      this.selectElement(elementId);
+    }
   }
 
   loadDocument(
@@ -211,6 +234,7 @@ export class ArchitectureEditor {
     {
       selectFirst = false,
       selectedId = null,
+      selectedIds = null,
       emitDocumentChange = true,
       captureUndo = false,
       preserveCamera = false
@@ -242,7 +266,20 @@ export class ArchitectureEditor {
       this.app.controls.update();
     }
 
-    if (selectedId && this.elements.has(selectedId)) {
+    const normalizedSelectedIds = Array.isArray(selectedIds)
+      ? selectedIds.filter((elementId) => this.elements.has(elementId))
+      : [];
+
+    if (normalizedSelectedIds.length > 0) {
+      const activeId =
+        selectedId && normalizedSelectedIds.includes(selectedId)
+          ? selectedId
+          : normalizedSelectedIds[normalizedSelectedIds.length - 1];
+      this.setSelectedIds(normalizedSelectedIds, {
+        activeId,
+        emitSelection: true
+      });
+    } else if (selectedId && this.elements.has(selectedId)) {
       this.selectElement(selectedId, { emitSelection: true });
     } else if (selectFirst) {
       const first = this.elements.keys().next().value ?? null;
@@ -264,17 +301,12 @@ export class ArchitectureEditor {
       element.dispose();
     }
     this.elements.clear();
-
-    if (this.selectionHelper) {
-      this.app.scene.remove(this.selectionHelper);
-      this.selectionHelper.geometry?.dispose();
-      this.selectionHelper.material?.dispose();
-      this.selectionHelper = null;
-    }
+    this.disposeSelectionHelpers();
 
     this.transformControls.detach();
     this.curveHandle.visible = false;
     this.selectedId = null;
+    this.selectedIds.clear();
     this.clearAlignmentGuides();
   }
 
@@ -290,12 +322,26 @@ export class ArchitectureEditor {
   createHistoryEntry() {
     return {
       document: this.exportDocument(),
-      selectedId: this.selectedId
+      selectedId: this.selectedId,
+      selectedIds: this.getSelectedIds()
     };
   }
 
   historyEntriesEqual(a, b) {
     if (!a || !b) {
+      return false;
+    }
+    const aSelectedIds = Array.isArray(a.selectedIds)
+      ? a.selectedIds
+      : a.selectedId
+        ? [a.selectedId]
+        : [];
+    const bSelectedIds = Array.isArray(b.selectedIds)
+      ? b.selectedIds
+      : b.selectedId
+        ? [b.selectedId]
+        : [];
+    if (!arraysEqual(aSelectedIds, bSelectedIds)) {
       return false;
     }
     if ((a.selectedId ?? null) !== (b.selectedId ?? null)) {
@@ -340,6 +386,7 @@ export class ArchitectureEditor {
     try {
       this.loadDocument(previous.document, {
         selectedId: previous.selectedId,
+        selectedIds: previous.selectedIds,
         emitDocumentChange: true,
         preserveCamera: true
       });
@@ -434,13 +481,32 @@ export class ArchitectureEditor {
     return normalized;
   }
 
-  selectElement(elementId, { emitSelection = true } = {}) {
+  getSelectedIds() {
+    return Array.from(this.selectedIds);
+  }
+
+  setSelectedIds(elementIds, { activeId = null, emitSelection = true } = {}) {
     this.endTransformDragSession();
-    if (elementId && !this.elements.has(elementId)) {
-      elementId = null;
+
+    const normalizedIds = [];
+    const seen = new Set();
+
+    for (const elementId of elementIds ?? []) {
+      if (!elementId || !this.elements.has(elementId) || seen.has(elementId)) {
+        continue;
+      }
+      seen.add(elementId);
+      normalizedIds.push(elementId);
     }
 
-    this.selectedId = elementId;
+    let nextSelectedId = activeId && seen.has(activeId) ? activeId : null;
+    if (!nextSelectedId) {
+      nextSelectedId = normalizedIds[normalizedIds.length - 1] ?? null;
+    }
+
+    this.selectedIds = new Set(normalizedIds);
+    this.selectedId = nextSelectedId;
+
     this.refreshSelectionVisualization();
 
     if (emitSelection) {
@@ -450,12 +516,73 @@ export class ArchitectureEditor {
     this.app.renderFrame();
   }
 
+  selectElement(elementId, { emitSelection = true } = {}) {
+    if (elementId && !this.elements.has(elementId)) {
+      this.setSelectedIds([], { emitSelection });
+      return;
+    }
+
+    const nextIds = elementId ? [elementId] : [];
+    this.setSelectedIds(nextIds, { activeId: elementId, emitSelection });
+  }
+
+  toggleElementSelection(elementId, { emitSelection = true } = {}) {
+    if (!elementId || !this.elements.has(elementId)) {
+      return;
+    }
+
+    const nextIds = this.getSelectedIds();
+    const existingIndex = nextIds.indexOf(elementId);
+    let nextSelectedId = this.selectedId;
+
+    if (existingIndex >= 0) {
+      nextIds.splice(existingIndex, 1);
+      if (nextSelectedId === elementId) {
+        nextSelectedId = nextIds[nextIds.length - 1] ?? null;
+      }
+    } else {
+      nextIds.push(elementId);
+      nextSelectedId = elementId;
+    }
+
+    this.setSelectedIds(nextIds, { activeId: nextSelectedId, emitSelection });
+  }
+
+  disposeSelectionHelpers() {
+    for (const helper of this.selectionHelpers) {
+      this.app.scene.remove(helper);
+      helper.geometry?.dispose();
+      helper.material?.dispose();
+    }
+    this.selectionHelpers = [];
+  }
+
+  updateSelectionHelpers() {
+    for (const helper of this.selectionHelpers) {
+      helper.update();
+    }
+  }
+
   refreshSelectionVisualization() {
-    if (this.selectionHelper) {
-      this.app.scene.remove(this.selectionHelper);
-      this.selectionHelper.geometry?.dispose();
-      this.selectionHelper.material?.dispose();
-      this.selectionHelper = null;
+    this.disposeSelectionHelpers();
+
+    const selectedIds = this.getSelectedIds();
+    if (selectedIds.length === 0) {
+      this.transformControls.detach();
+      this.curveHandle.visible = false;
+      return;
+    }
+
+    for (const elementId of selectedIds) {
+      const element = this.elements.get(elementId);
+      if (!element) {
+        continue;
+      }
+
+      const helperColor = elementId === this.selectedId ? 0x9cd8ff : 0x6ea4c7;
+      const helper = new THREE.BoxHelper(element.group, helperColor);
+      this.selectionHelpers.push(helper);
+      this.app.add(helper);
     }
 
     const selected = this.getSelectedElement();
@@ -465,10 +592,8 @@ export class ArchitectureEditor {
       return;
     }
 
-    this.selectionHelper = new THREE.BoxHelper(selected.group, 0x9cd8ff);
-    this.app.add(this.selectionHelper);
-
-    if (this.curveHandleEnabled && selected.isCurved && selected.isCurved()) {
+    const isSingleSelection = selectedIds.length === 1;
+    if (isSingleSelection && this.curveHandleEnabled && selected.isCurved && selected.isCurved()) {
       this.attachCurveHandle(selected);
     } else {
       this.detachCurveHandle();
@@ -504,7 +629,8 @@ export class ArchitectureEditor {
   setTransformMode(mode) {
     this.transformMode = mode === "rotate" ? "rotate" : "translate";
 
-    if (!(this.curveHandleEnabled && this.getSelectedElement()?.isCurved?.())) {
+    const hasSingleSelection = this.getSelectedIds().length === 1;
+    if (!(hasSingleSelection && this.curveHandleEnabled && this.getSelectedElement()?.isCurved?.())) {
       this.transformControls.setMode(this.transformMode);
     }
 
@@ -631,9 +757,7 @@ export class ArchitectureEditor {
     selected.group.rotation[axisKey] = snappedAngle;
     selected.syncTransformFromGroup();
 
-    if (this.selectionHelper) {
-      this.selectionHelper.update();
-    }
+    this.updateSelectionHelpers();
 
     this.emitDocumentChange();
     this.emitSelectionChange();
@@ -663,12 +787,17 @@ export class ArchitectureEditor {
   }
 
   beginTransformDragSession(selected) {
+    const selectedIds = this.getSelectedIds();
+    const selectedIdSet = new Set(selectedIds);
     const lockedAxis = this.getLockedAxisForPlane();
     this.dragSession = {
       selectedId: selected.id,
+      selectedIds,
+      linkedIds: selectedIds.filter((elementId) => elementId !== selected.id),
+      lastPrimaryPosition: selected.group.position.clone(),
       lockedAxis,
       lockedAxisValue: lockedAxis ? selected.group.position[lockedAxis] : null,
-      otherAnchors: this.collectAlignmentAnchors(selected.id)
+      otherAnchors: this.collectAlignmentAnchors(selectedIdSet)
     };
     this.clearAlignmentGuides();
   }
@@ -693,7 +822,9 @@ export class ArchitectureEditor {
     this.transformControls.showZ = lockedAxis !== "z";
   }
 
-  collectAlignmentAnchors(excludedId) {
+  collectAlignmentAnchors(excludedIds = new Set()) {
+    const excluded =
+      excludedIds instanceof Set ? excludedIds : new Set(excludedIds ? [excludedIds] : []);
     const anchors = {
       x: [],
       y: [],
@@ -701,7 +832,7 @@ export class ArchitectureEditor {
     };
 
     for (const [elementId, element] of this.elements.entries()) {
-      if (elementId === excludedId) {
+      if (excluded.has(elementId)) {
         continue;
       }
 
@@ -914,31 +1045,80 @@ export class ArchitectureEditor {
     this.alignmentGuidesGroup.visible = false;
   }
 
+  applyDeltaToLinkedSelection(delta, selectedId) {
+    if (!this.dragSession || !Array.isArray(this.dragSession.linkedIds)) {
+      return;
+    }
+    if (delta.lengthSq() <= 1e-12) {
+      return;
+    }
+
+    for (const elementId of this.dragSession.linkedIds) {
+      if (elementId === selectedId) {
+        continue;
+      }
+      const element = this.elements.get(elementId);
+      if (!element) {
+        continue;
+      }
+      element.group.position.add(delta);
+      element.syncTransformFromGroup();
+    }
+  }
+
   duplicateSelected() {
-    const selected = this.getSelectedElement();
-    if (!selected) {
+    const selectedIds = this.getSelectedIds();
+    if (selectedIds.length === 0) {
       return null;
     }
 
     this.recordUndoSnapshot();
 
-    const duplicated = duplicateElementConfig(selected.toDocumentElement());
-    return this.addElementInstance(duplicated, { select: true, emitDocumentChange: true });
+    const duplicatedIds = [];
+    for (const elementId of selectedIds) {
+      const selected = this.elements.get(elementId);
+      if (!selected) {
+        continue;
+      }
+      const duplicated = duplicateElementConfig(selected.toDocumentElement());
+      const duplicatedId = this.addElementInstance(duplicated, {
+        select: false,
+        emitDocumentChange: false
+      });
+      if (duplicatedId) {
+        duplicatedIds.push(duplicatedId);
+      }
+    }
+
+    if (duplicatedIds.length === 0) {
+      return null;
+    }
+
+    const activeId = duplicatedIds[duplicatedIds.length - 1];
+    this.setSelectedIds(duplicatedIds, { activeId, emitSelection: true });
+    this.emitDocumentChange();
+    this.app.renderFrame();
+    return activeId;
   }
 
   deleteSelectedElement() {
-    if (!this.selectedId || !this.elements.has(this.selectedId)) {
+    const selectedIds = this.getSelectedIds().filter((elementId) => this.elements.has(elementId));
+    if (selectedIds.length === 0) {
       return false;
     }
 
     this.recordUndoSnapshot();
 
-    const targetId = this.selectedId;
-    const targetElement = this.elements.get(targetId);
-    targetElement.dispose();
-    this.elements.delete(targetId);
+    for (const targetId of selectedIds) {
+      const targetElement = this.elements.get(targetId);
+      if (!targetElement) {
+        continue;
+      }
+      targetElement.dispose();
+      this.elements.delete(targetId);
+    }
 
-    this.selectElement(null, { emitSelection: true });
+    this.setSelectedIds([], { emitSelection: true });
     this.emitDocumentChange();
     this.app.renderFrame();
     return true;
@@ -981,9 +1161,7 @@ export class ArchitectureEditor {
     if (attachedObject === this.curveHandle && this.curveHandleEnabled && selected.isCurved?.()) {
       selected.setControlPointFromWorld(this.curveHandle.getWorldPosition(new THREE.Vector3()));
       this.curveHandle.position.copy(selected.getControlPointWorld());
-      if (this.selectionHelper) {
-        this.selectionHelper.update();
-      }
+      this.updateSelectionHelpers();
       this.emitDocumentChange();
       this.emitSelectionChange();
       return;
@@ -991,13 +1169,25 @@ export class ArchitectureEditor {
 
     if (attachedObject === selected.group) {
       if (this.transformControls.getMode() === "translate") {
+        if (this.dragSession?.selectedId === selected.id) {
+          const previousPrimaryPosition =
+            this.dragSession.lastPrimaryPosition ?? selected.group.position.clone();
+          const dragDelta = selected.group.position.clone().sub(previousPrimaryPosition);
+          this.applyDeltaToLinkedSelection(dragDelta, selected.id);
+        }
+
+        const preAlignmentPosition = selected.group.position.clone();
         this.applyTranslationAlignment(selected);
+        const alignmentDelta = selected.group.position.clone().sub(preAlignmentPosition);
+        this.applyDeltaToLinkedSelection(alignmentDelta, selected.id);
+
+        if (this.dragSession?.selectedId === selected.id) {
+          this.dragSession.lastPrimaryPosition = selected.group.position.clone();
+        }
       }
 
       selected.syncTransformFromGroup();
-      if (this.selectionHelper) {
-        this.selectionHelper.update();
-      }
+      this.updateSelectionHelpers();
       this.emitDocumentChange();
       this.emitSelectionChange();
     }
@@ -1052,14 +1242,14 @@ export class ArchitectureEditor {
     const previousState = {
       transformControlsHelperVisible: this.transformControlsHelper.visible,
       curveHandleVisible: this.curveHandle.visible,
-      selectionHelperVisible: this.selectionHelper ? this.selectionHelper.visible : null,
+      selectionHelpersVisible: this.selectionHelpers.map((helper) => helper.visible),
       alignmentGuidesVisible: this.alignmentGuidesGroup.visible
     };
 
     this.transformControlsHelper.visible = false;
     this.curveHandle.visible = false;
-    if (this.selectionHelper) {
-      this.selectionHelper.visible = false;
+    for (const helper of this.selectionHelpers) {
+      helper.visible = false;
     }
     this.alignmentGuidesGroup.visible = false;
 
@@ -1068,8 +1258,12 @@ export class ArchitectureEditor {
     } finally {
       this.transformControlsHelper.visible = previousState.transformControlsHelperVisible;
       this.curveHandle.visible = previousState.curveHandleVisible;
-      if (this.selectionHelper && previousState.selectionHelperVisible != null) {
-        this.selectionHelper.visible = previousState.selectionHelperVisible;
+      for (let index = 0; index < this.selectionHelpers.length; index += 1) {
+        const helper = this.selectionHelpers[index];
+        const wasVisible = previousState.selectionHelpersVisible[index];
+        if (wasVisible != null) {
+          helper.visible = wasVisible;
+        }
       }
       this.alignmentGuidesGroup.visible = previousState.alignmentGuidesVisible;
       this.app.renderFrame();

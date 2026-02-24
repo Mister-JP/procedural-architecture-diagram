@@ -1114,7 +1114,7 @@ importInput.addEventListener("change", async () => {
 const leftHelp = document.createElement("p");
 leftHelp.className = "panel-help";
 leftHelp.textContent =
-  "Undo with Cmd/Ctrl+Z. Double-click a rotate axis to snap 90°. Move mode shows temporary alignment guides and snapping.";
+  "Shift+click to multi-select. Undo with Cmd/Ctrl+Z. Double-click a rotate axis to snap 90°. Move mode shows temporary alignment guides and snapping.";
 
 leftPanel.append(
   leftHeader,
