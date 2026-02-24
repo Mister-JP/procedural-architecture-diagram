@@ -26,6 +26,9 @@ export class ConvolutionStageVisualization {
     filterCount = 32,
     kernelGridColumns = 8,
     highlightedKernelIndex = 0,
+    kernelDisplayMode = "bank",
+    highlightKernelAtInputPatch = true,
+    showHighlightConnections = true,
     filterColor
   }) {
     this.inputVolume = inputVolume;
@@ -34,6 +37,9 @@ export class ConvolutionStageVisualization {
     this.filterCount = filterCount;
     this.kernelGridColumns = kernelGridColumns;
     this.highlightedKernelIndex = highlightedKernelIndex;
+    this.kernelDisplayMode = kernelDisplayMode;
+    this.highlightKernelAtInputPatch = highlightKernelAtInputPatch;
+    this.showHighlightConnections = showHighlightConnections;
     this.filterColor = filterColor;
 
     this.object3d = this.build();
@@ -44,7 +50,9 @@ export class ConvolutionStageVisualization {
     const layout = this.computeLayout();
 
     this.addKernelBank(group, layout);
-    this.addHighlightConnections(group, layout);
+    if (this.showHighlightConnections) {
+      this.addHighlightConnections(group, layout);
+    }
 
     return group;
   }
@@ -54,7 +62,15 @@ export class ConvolutionStageVisualization {
     const kernelDepthSpan =
       this.inputVolume.channels * this.inputVolume.pixelDepth +
       (this.inputVolume.channels - 1) * this.inputVolume.layerGap;
-
+    const inputHeightSpan =
+      this.inputVolume.height * this.inputVolume.pixelSize +
+      (this.inputVolume.height - 1) * this.inputVolume.gap;
+    const outputHeightSpan =
+      this.outputVolume.height * this.outputVolume.pixelSize +
+      (this.outputVolume.height - 1) * this.outputVolume.gap;
+    const outputDepthSpan =
+      this.outputVolume.channels * this.outputVolume.pixelDepth +
+      (this.outputVolume.channels - 1) * this.outputVolume.layerGap;
     const cols = this.kernelGridColumns;
     const rows = Math.ceil(this.filterCount / cols);
     const cellStep = kernelXYSpan + 1.15;
@@ -62,17 +78,50 @@ export class ConvolutionStageVisualization {
     const bankWidth = cols * kernelXYSpan + (cols - 1) * (cellStep - kernelXYSpan);
     const bankHeight = rows * kernelXYSpan + (rows - 1) * (cellStep - kernelXYSpan);
 
-    const bankCenterY = this.inputVolume.getCenterY();
-    const bankCenterZ = (this.inputVolume.getCenterZ() + this.outputVolume.getCenterZ()) * 0.5;
+    const inputCenterX = this.inputVolume.getCenterX();
+    const inputCenterY = this.inputVolume.getCenterY();
+    const inputCenterZ = this.inputVolume.getCenterZ();
+    const outputCenterX = this.outputVolume.getCenterX();
+    const outputCenterY = this.outputVolume.getCenterY();
+    const outputCenterZ = this.outputVolume.getCenterZ();
 
-    const bankStartX = this.inputVolume.getCenterX() - bankWidth * 0.5 + kernelXYSpan * 0.5;
+    let bankCenterX = inputCenterX;
+    let bankCenterY = inputCenterY;
+    let bankCenterZ = (inputCenterZ + outputCenterZ) * 0.5;
+
+    if (this.kernelDisplayMode === "between-volumes") {
+      bankCenterX = (inputCenterX + outputCenterX) * 0.5;
+
+      const deltaY = outputCenterY - inputCenterY;
+      const deltaZ = outputCenterZ - inputCenterZ;
+
+      if (Math.abs(deltaY) >= Math.abs(deltaZ)) {
+        const inputFaceY = deltaY < 0 ? this.inputVolume.upperLeft.y - inputHeightSpan : this.inputVolume.upperLeft.y;
+        const outputFaceY = deltaY < 0 ? this.outputVolume.upperLeft.y : this.outputVolume.upperLeft.y - outputHeightSpan;
+        bankCenterY = (inputFaceY + outputFaceY) * 0.5;
+        bankCenterZ = (inputCenterZ + outputCenterZ) * 0.5;
+      } else {
+        const inputFaceZ = deltaZ >= 0 ? this.inputVolume.upperLeft.z : this.inputVolume.upperLeft.z - kernelDepthSpan;
+        const outputFaceZ = deltaZ >= 0 ? this.outputVolume.upperLeft.z - outputDepthSpan : this.outputVolume.upperLeft.z;
+        bankCenterZ = (inputFaceZ + outputFaceZ) * 0.5;
+        bankCenterY = (inputCenterY + outputCenterY) * 0.5;
+      }
+    }
+
+    const bankStartX = bankCenterX - bankWidth * 0.5 + kernelXYSpan * 0.5;
     const bankTopY = bankCenterY + bankHeight * 0.5 - kernelXYSpan * 0.5;
-
-    const highlightedKernelCenter = new THREE.Vector3(
-      this.inputVolume.getKernelCenter(0, this.kernelSize).x,
-      this.inputVolume.getKernelCenter(0, this.kernelSize).y,
+    const highlightedKernelRow = Math.floor(this.highlightedKernelIndex / cols);
+    const highlightedKernelCol = this.highlightedKernelIndex % cols;
+    const highlightedGridCenter = new THREE.Vector3(
+      bankStartX + highlightedKernelCol * cellStep,
+      bankTopY - highlightedKernelRow * cellStep,
       bankCenterZ
     );
+
+    const inputKernelCenter = this.inputVolume.getKernelCenter(0, this.kernelSize);
+    const highlightedKernelCenter = this.highlightKernelAtInputPatch
+      ? new THREE.Vector3(inputKernelCenter.x, inputKernelCenter.y, bankCenterZ)
+      : highlightedGridCenter;
 
     return {
       cols,

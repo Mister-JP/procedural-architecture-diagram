@@ -49,6 +49,43 @@ export const PIPELINE_CONFIG = {
       zOffsetFromInput: 75,
       outputColor: createGradientResolver(0x8fd3ff, 0x0a2a8f),
       kernelColor: createGradientResolver(0x0a2a8f, 0x8fd3ff)
+    },
+    {
+      outputChannels: 32,
+      outputShape: [32, 64, 64],
+      kernelSize: 3,
+      filterCount: 32,
+      kernelDisplayMode: "between-volumes",
+      highlightKernelAtInputPatch: false,
+      showHighlightConnections: false,
+      alignCenterXWithInput: true,
+      yOffsetFromInput: -208,
+      zOffsetFromInput: 0,
+      outputColor: createGradientResolver(0xff7676, 0x4a0606),
+      kernelColor: createGradientResolver(0x8e0b0b, 0xff7676)
+    },
+    {
+      outputChannels: 64,
+      outputShape: [64, 64, 64],
+      kernelSize: 3,
+      filterCount: 64,
+      kernelDisplayMode: "between-volumes",
+      alignCenterXWithInput: true,
+      yOffsetFromInput: 0,
+      zOffsetFromInput: 125,
+      outputColor: createGradientResolver(0xfff7bf, 0xffe100),
+      kernelColor: createGradientResolver(0xffe100, 0xfff7bf)
+    },
+    {
+      outputChannels: 64,
+      outputShape: [64, 64, 64],
+      kernelSize: 3,
+      filterCount: 64,
+      alignCenterXWithInput: true,
+      yOffsetFromInput: 0,
+      zOffsetFromInput: 160,
+      outputColor: createGradientResolver(0x8fd3ff, 0x0a2a8f),
+      kernelColor: createGradientResolver(0x0a2a8f, 0x8fd3ff)
     }
   ]
 };

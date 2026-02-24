@@ -13,8 +13,24 @@ function createTensorVolume({ shape, upperLeft, channelColor }) {
   });
 }
 
-function createOutputUpperLeft(inputUpperLeft, zOffsetFromInput) {
-  return new THREE.Vector3(inputUpperLeft.x, inputUpperLeft.y, inputUpperLeft.z + zOffsetFromInput);
+function getTensorSpan(length, step, voxelSize) {
+  return length * voxelSize + (length - 1) * (step - voxelSize);
+}
+
+function createOutputUpperLeft(inputVolume, stage, outputShape) {
+  const xOffset = stage.xOffsetFromInput ?? 0;
+  const yOffset = stage.yOffsetFromInput ?? 0;
+  const zOffset = stage.zOffsetFromInput ?? 0;
+
+  const outputWidth = outputShape[2];
+  const outputWidthSpan = getTensorSpan(outputWidth, inputVolume.stepXY, inputVolume.pixelSize);
+  const alignedUpperLeftX = inputVolume.getCenterX() - outputWidthSpan * 0.5;
+
+  return new THREE.Vector3(
+    (stage.alignCenterXWithInput ? alignedUpperLeftX : inputVolume.upperLeft.x) + xOffset,
+    inputVolume.upperLeft.y + yOffset,
+    inputVolume.upperLeft.z + zOffset
+  );
 }
 
 function buildPipeline(app) {
@@ -29,23 +45,29 @@ function buildPipeline(app) {
   let currentInputVolume = inputVolume;
 
   for (const stage of PIPELINE_CONFIG.stages) {
+    const outputShape = stage.outputShape ?? [stage.outputChannels, currentInputVolume.height, currentInputVolume.width];
     const outputVolume = createTensorVolume({
-      shape: [stage.outputChannels, currentInputVolume.height, currentInputVolume.width],
-      upperLeft: createOutputUpperLeft(currentInputVolume.upperLeft, stage.zOffsetFromInput),
+      shape: outputShape,
+      upperLeft: createOutputUpperLeft(currentInputVolume, stage, outputShape),
       channelColor: stage.outputColor
     });
 
     app.add(outputVolume.object3d);
 
-    const stageVisualization = new ConvolutionStageVisualization({
-      inputVolume: currentInputVolume,
-      outputVolume,
-      kernelSize: stage.kernelSize,
-      filterCount: stage.filterCount,
-      filterColor: stage.kernelColor
-    });
+    if (stage.showStageVisualization !== false) {
+      const stageVisualization = new ConvolutionStageVisualization({
+        inputVolume: currentInputVolume,
+        outputVolume,
+        kernelSize: stage.kernelSize,
+        filterCount: stage.filterCount,
+        kernelDisplayMode: stage.kernelDisplayMode,
+        highlightKernelAtInputPatch: stage.highlightKernelAtInputPatch,
+        showHighlightConnections: stage.showHighlightConnections,
+        filterColor: stage.kernelColor
+      });
 
-    app.add(stageVisualization.object3d);
+      app.add(stageVisualization.object3d);
+    }
     currentInputVolume = outputVolume;
   }
 }
