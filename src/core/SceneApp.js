@@ -18,7 +18,7 @@ export class SceneApp {
   } = {}) {
     this.container = container;
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: false });
+    this.renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setSize(window.innerWidth, window.innerHeight);
     this.container.appendChild(this.renderer.domElement);
@@ -26,7 +26,7 @@ export class SceneApp {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(background);
 
-    this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 3000);
+    this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 2000);
     this.camera.position.copy(cameraPosition);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);

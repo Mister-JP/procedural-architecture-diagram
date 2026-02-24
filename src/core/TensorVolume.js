@@ -23,7 +23,7 @@ const EDGE_FRAGMENT_SHADER = `
 `;
 
 /**
- * Renders a 3D tensor using instanced voxel cubes per channel.
+ * Renders a 3D tensor using instanced voxel cubes across the full volume.
  *
  * Public methods provide center/position helpers that other visual components
  * (kernels, tunnels, highlights) can reuse without duplicating math.
@@ -71,57 +71,61 @@ export class TensorVolume {
     const edgeGeometry = new THREE.EdgesGeometry(voxelGeometry);
 
     const group = new THREE.Group();
-    for (let channel = 0; channel < this.channels; channel += 1) {
-      const layer = this.buildChannelLayer({ channel, voxelGeometry, edgeGeometry });
-      group.add(layer.mesh);
-      group.add(layer.edges);
-    }
+    const { mesh, edges } = this.buildVolumeInstances({ voxelGeometry, edgeGeometry });
+    group.add(mesh);
+    group.add(edges);
 
     return group;
   }
 
-  buildChannelLayer({ channel, voxelGeometry, edgeGeometry }) {
-    const countPerLayer = this.height * this.width;
-    const layerColor = this.getChannelColor(channel);
-
+  buildVolumeInstances({ voxelGeometry, edgeGeometry }) {
+    const totalCount = this.channels * this.height * this.width;
     const mesh = new THREE.InstancedMesh(
       voxelGeometry,
-      new THREE.MeshBasicMaterial({ color: layerColor }),
-      countPerLayer
+      new THREE.MeshBasicMaterial(),
+      totalCount
     );
 
-    const offsets = new Float32Array(countPerLayer * 3);
+    const offsets = new Float32Array(totalCount * 3);
     const matrix = new THREE.Matrix4();
+    const color = new THREE.Color();
 
     const offsetX = this.pixelSize * 0.5;
     const offsetY = this.pixelSize * 0.5;
     const offsetZ = this.pixelDepth * 0.5;
 
     let instance = 0;
-    for (let y = 0; y < this.height; y += 1) {
-      for (let x = 0; x < this.width; x += 1) {
-        const px = this.upperLeft.x + x * this.stepXY + offsetX;
-        const py = this.upperLeft.y - y * this.stepXY - offsetY;
-        const pz = this.upperLeft.z - channel * this.stepZ - offsetZ;
+    for (let channel = 0; channel < this.channels; channel += 1) {
+      color.setHex(this.getChannelColor(channel));
+      for (let y = 0; y < this.height; y += 1) {
+        for (let x = 0; x < this.width; x += 1) {
+          const px = this.upperLeft.x + x * this.stepXY + offsetX;
+          const py = this.upperLeft.y - y * this.stepXY - offsetY;
+          const pz = this.upperLeft.z - channel * this.stepZ - offsetZ;
 
-        matrix.setPosition(px, py, pz);
-        mesh.setMatrixAt(instance, matrix);
+          matrix.setPosition(px, py, pz);
+          mesh.setMatrixAt(instance, matrix);
+          mesh.setColorAt(instance, color);
 
-        const offsetIndex = instance * 3;
-        offsets[offsetIndex] = px;
-        offsets[offsetIndex + 1] = py;
-        offsets[offsetIndex + 2] = pz;
+          const offsetIndex = instance * 3;
+          offsets[offsetIndex] = px;
+          offsets[offsetIndex + 1] = py;
+          offsets[offsetIndex + 2] = pz;
 
-        instance += 1;
+          instance += 1;
+        }
       }
     }
 
     mesh.instanceMatrix.needsUpdate = true;
+    if (mesh.instanceColor) {
+      mesh.instanceColor.needsUpdate = true;
+    }
 
     const edgeInstances = new THREE.InstancedBufferGeometry();
     edgeInstances.setAttribute("position", edgeGeometry.getAttribute("position"));
     edgeInstances.setAttribute("instanceOffset", new THREE.InstancedBufferAttribute(offsets, 3));
-    edgeInstances.instanceCount = countPerLayer;
+    edgeInstances.instanceCount = totalCount;
 
     const edgeMaterial = new THREE.ShaderMaterial({
       uniforms: {

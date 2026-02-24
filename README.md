@@ -15,6 +15,10 @@ Three.js app that visualizes a multi-stage convolution pipeline with reusable te
   - `64` kernels of `64 x 3 x 3` -> output `64 x 32 x 32`
   - `128` kernels of `64 x 3 x 3` -> output `128 x 32 x 32`
   - `128` kernels of `128 x 3 x 3` -> output `128 x 32 x 32`
+- Stage 5 stack:
+  - `128` kernels of `128 x 3 x 3` -> output `128 x 16 x 16`
+  - `256` kernels of `128 x 3 x 3` -> output `256 x 16 x 16`
+  - `256` kernels of `256 x 3 x 3` -> output `256 x 16 x 16`
 - Highlighted tunnels: input patch -> highlighted kernel -> highlighted output pixel
 
 ## Project structure

@@ -5,6 +5,8 @@ import { ConvolutionStageVisualization } from "./core/ConvolutionStageVisualizat
 import { getAxisSpan } from "./core/tensor-math.js";
 import { PIPELINE_CONFIG, SCENE_CONFIG, SHARED_VOXEL_GEOMETRY } from "./config/pipeline-config.js";
 
+const PROPORTIONAL_SPACING_FACTOR = 0.4;
+
 function createTensorVolume({ shape, upperLeft, channelColor }) {
   return new TensorVolume({
     shape,
@@ -20,13 +22,36 @@ function createOutputUpperLeft(inputVolume, stage, outputShape) {
   const zOffset = stage.zOffsetFromInput ?? 0;
 
   const outputWidth = outputShape[2];
+  const outputHeight = outputShape[1];
+  const outputChannels = outputShape[0];
   const outputWidthSpan = getAxisSpan(outputWidth, inputVolume.pixelSize, inputVolume.gap);
+  const outputHeightSpan = getAxisSpan(outputHeight, inputVolume.pixelSize, inputVolume.gap);
+  const outputDepthSpan = getAxisSpan(outputChannels, inputVolume.pixelDepth, inputVolume.layerGap);
   const alignedUpperLeftX = inputVolume.getCenterX() - outputWidthSpan * 0.5;
+  const inputHeightSpan = inputVolume.getHeightSpan();
+  const inputDepthSpan = inputVolume.getDepthSpan();
+  const proportionalYSpan = (inputHeightSpan * 0.5 + outputHeightSpan * 0.5) * PROPORTIONAL_SPACING_FACTOR;
+  const proportionalZSpan = (inputDepthSpan * 0.5 + outputDepthSpan * 0.5) * PROPORTIONAL_SPACING_FACTOR;
+
+  const outputCenterY =
+    yOffset === 0
+      ? inputVolume.getCenterY()
+      : inputVolume.getCenterY() +
+        Math.sign(yOffset) * (proportionalYSpan + Math.abs(yOffset));
+
+  const outputCenterZ =
+    zOffset === 0
+      ? inputVolume.getCenterZ()
+      : inputVolume.getCenterZ() +
+        Math.sign(zOffset) * (proportionalZSpan + Math.abs(zOffset));
+
+  const centeredUpperLeftY = outputCenterY + outputHeightSpan * 0.5;
+  const centeredUpperLeftZ = outputCenterZ + outputDepthSpan * 0.5;
 
   return new THREE.Vector3(
     (stage.alignCenterXWithInput ? alignedUpperLeftX : inputVolume.upperLeft.x) + xOffset,
-    inputVolume.upperLeft.y + yOffset,
-    inputVolume.upperLeft.z + zOffset
+    centeredUpperLeftY,
+    centeredUpperLeftZ
   );
 }
 

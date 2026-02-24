@@ -197,6 +197,36 @@ export const PIPELINE_CONFIG = {
       yOffsetFromInput: 0,
       zOffsetFromInput: 260,
       ...STAGE_COLORS.blue
+    }),
+    createConvolutionStage({
+      outputChannels: 128,
+      outputShape: [128, 16, 16],
+      kernelLayoutMode: "between-volumes",
+      highlightKernelAtInputPatch: false,
+      showHighlightConnections: false,
+      alignCenterXWithInput: true,
+      yOffsetFromInput: -208,
+      zOffsetFromInput: 0,
+      ...STAGE_COLORS.red
+    }),
+    createConvolutionStage({
+      outputChannels: 256,
+      outputShape: [256, 16, 16],
+      kernelLayoutMode: "between-volumes",
+      highlightKernelAtInputPatch: false,
+      alignCenterXWithInput: true,
+      yOffsetFromInput: 0,
+      zOffsetFromInput: 250,
+      ...STAGE_COLORS.gold
+    }),
+    createConvolutionStage({
+      outputChannels: 256,
+      outputShape: [256, 16, 16],
+      highlightKernelAtInputPatch: false,
+      alignCenterXWithInput: true,
+      yOffsetFromInput: 0,
+      zOffsetFromInput: 420,
+      ...STAGE_COLORS.blue
     })
   ]
 };

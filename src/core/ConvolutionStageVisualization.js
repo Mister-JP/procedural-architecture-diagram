@@ -30,7 +30,7 @@ export class ConvolutionStageVisualization {
     kernelSize = 3,
     kernelCount,
     filterCount,
-    kernelGridColumns = 8,
+    kernelGridColumns,
     highlightedKernelIndex = 0,
     kernelLayoutMode,
     kernelDisplayMode,
@@ -43,7 +43,7 @@ export class ConvolutionStageVisualization {
     this.outputVolume = outputVolume;
     this.kernelSize = kernelSize;
     this.kernelCount = Math.max(1, kernelCount ?? filterCount ?? 32);
-    this.kernelGridColumns = kernelGridColumns;
+    this.kernelGridColumns = kernelGridColumns ?? this.getAdaptiveKernelGridColumns();
     this.highlightedKernelIndex = Math.max(
       0,
       Math.min(highlightedKernelIndex, this.kernelCount - 1)
@@ -54,6 +54,12 @@ export class ConvolutionStageVisualization {
     this.kernelColor = kernelColor ?? filterColor;
 
     this.object3d = this.build();
+  }
+
+  getAdaptiveKernelGridColumns() {
+    // Keep small banks visually consistent with prior layouts, but scale columns
+    // for large kernel counts to avoid excessively tall banks.
+    return Math.max(8, Math.ceil(Math.sqrt(this.kernelCount)));
   }
 
   build() {
