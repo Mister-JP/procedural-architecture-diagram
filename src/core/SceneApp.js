@@ -123,16 +123,51 @@ export class SceneApp {
     this.renderFrame();
   }
 
-  exportRaster(format = "png", quality = 0.92) {
-    this.renderFrame();
+  exportRaster(formatOrOptions = "png", quality = 0.92) {
+    const options =
+      typeof formatOrOptions === "object" && formatOrOptions !== null
+        ? formatOrOptions
+        : { format: formatOrOptions, quality };
+
+    const format = options.format ?? "png";
+    const exportQuality = options.quality ?? 0.92;
+    const width = Number.isFinite(options.width) ? Math.max(1, Math.round(options.width)) : null;
+    const height = Number.isFinite(options.height) ? Math.max(1, Math.round(options.height)) : null;
 
     const mimeType =
       format === "jpeg" || format === "jpg" ? "image/jpeg" : "image/png";
 
-    if (mimeType === "image/jpeg") {
-      return this.renderer.domElement.toDataURL(mimeType, quality);
+    if (!width || !height) {
+      this.renderFrame();
+      if (mimeType === "image/jpeg") {
+        return this.renderer.domElement.toDataURL(mimeType, exportQuality);
+      }
+      return this.renderer.domElement.toDataURL(mimeType);
     }
 
-    return this.renderer.domElement.toDataURL(mimeType);
+    const previousSize = this.renderer.getSize(new THREE.Vector2());
+    const previousPixelRatio = this.renderer.getPixelRatio();
+    const previousAspect = this.camera.aspect;
+
+    try {
+      this.renderer.setPixelRatio(1);
+      this.renderer.setSize(width, height, false);
+      this.camera.aspect = width / height;
+      this.camera.updateProjectionMatrix();
+
+      this.controls.update();
+      this.renderer.render(this.scene, this.camera);
+
+      if (mimeType === "image/jpeg") {
+        return this.renderer.domElement.toDataURL(mimeType, exportQuality);
+      }
+      return this.renderer.domElement.toDataURL(mimeType);
+    } finally {
+      this.renderer.setPixelRatio(previousPixelRatio);
+      this.renderer.setSize(previousSize.x, previousSize.y, false);
+      this.camera.aspect = previousAspect;
+      this.camera.updateProjectionMatrix();
+      this.renderFrame();
+    }
   }
 }

@@ -25,6 +25,15 @@ function downloadTextFile(content, fileName, mimeType = "application/json") {
   URL.revokeObjectURL(objectUrl);
 }
 
+function downloadDataUrl(dataUrl, fileName) {
+  const anchor = document.createElement("a");
+  anchor.href = dataUrl;
+  anchor.download = fileName;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+}
+
 function createButton(label, { className = "tool-button", title = "" } = {}) {
   const button = document.createElement("button");
   button.type = "button";
@@ -43,6 +52,14 @@ function normalizeSingleElement(element) {
 function toNumber(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toResolution(value, fallback, min = 64, max = 8192) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+  return Math.min(max, Math.max(min, Math.round(parsed)));
 }
 
 function setGlobalBackground(color) {
@@ -64,13 +81,19 @@ const app = new SceneApp({
 
 setGlobalBackground(startingDocument.scene.background);
 
+const initialExportResolution = {
+  width: Math.max(64, Math.round(window.innerWidth)),
+  height: Math.max(64, Math.round(window.innerHeight))
+};
+
 const uiState = {
   inspectorMode: "create",
   draftElement: createDefaultElement(ELEMENT_TYPES.tensor),
   selectedElement: null,
   holdCreateModeOnNextSelection: false,
   curveHandleEnabled: false,
-  latestDocument: clone(startingDocument)
+  latestDocument: clone(startingDocument),
+  exportResolution: initialExportResolution
 };
 
 let duplicateButton;
@@ -855,7 +878,52 @@ backgroundInput.addEventListener("input", () => {
   editor.setBackground(backgroundInput.value);
 });
 backgroundRow.appendChild(backgroundInput);
-sceneSection.append(sceneHeading, backgroundRow);
+
+const exportResolutionRow = createFieldRow("Export Size");
+const exportResolutionControls = document.createElement("div");
+exportResolutionControls.className = "export-resolution-controls";
+
+const exportWidthInput = document.createElement("input");
+exportWidthInput.className = "field-input";
+exportWidthInput.type = "number";
+exportWidthInput.min = "64";
+exportWidthInput.max = "8192";
+exportWidthInput.step = "1";
+exportWidthInput.value = String(uiState.exportResolution.width);
+exportWidthInput.title = "Export width in pixels";
+
+const exportResolutionSeparator = document.createElement("span");
+exportResolutionSeparator.className = "export-resolution-separator";
+exportResolutionSeparator.textContent = "x";
+
+const exportHeightInput = document.createElement("input");
+exportHeightInput.className = "field-input";
+exportHeightInput.type = "number";
+exportHeightInput.min = "64";
+exportHeightInput.max = "8192";
+exportHeightInput.step = "1";
+exportHeightInput.value = String(uiState.exportResolution.height);
+exportHeightInput.title = "Export height in pixels";
+
+const syncExportResolutionState = () => {
+  const width = toResolution(exportWidthInput.value, uiState.exportResolution.width);
+  const height = toResolution(exportHeightInput.value, uiState.exportResolution.height);
+  uiState.exportResolution = { width, height };
+  exportWidthInput.value = String(width);
+  exportHeightInput.value = String(height);
+};
+
+exportWidthInput.addEventListener("change", syncExportResolutionState);
+exportHeightInput.addEventListener("change", syncExportResolutionState);
+
+exportResolutionControls.append(
+  exportWidthInput,
+  exportResolutionSeparator,
+  exportHeightInput
+);
+exportResolutionRow.appendChild(exportResolutionControls);
+
+sceneSection.append(sceneHeading, backgroundRow, exportResolutionRow);
 
 const fileActions = document.createElement("div");
 fileActions.className = "button-row";
@@ -871,7 +939,20 @@ importJsonButton.addEventListener("click", () => {
   importInput.click();
 });
 
-fileActions.append(exportJsonButton, importJsonButton);
+const exportImageButton = createButton("Export PNG", { className: "tool-button compact full-row" });
+exportImageButton.title = "Export current camera view as PNG";
+exportImageButton.addEventListener("click", () => {
+  try {
+    syncExportResolutionState();
+    const { width, height } = uiState.exportResolution;
+    const dataUrl = editor.exportImage({ format: "png", width, height });
+    downloadDataUrl(dataUrl, "architecture-view.png");
+  } catch (error) {
+    window.alert(`Unable to export PNG: ${error.message}`);
+  }
+});
+
+fileActions.append(exportJsonButton, importJsonButton, exportImageButton);
 
 importInput = document.createElement("input");
 importInput.type = "file";

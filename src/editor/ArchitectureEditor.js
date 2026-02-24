@@ -455,6 +455,41 @@ export class ArchitectureEditor {
     return exported;
   }
 
+  exportImage({
+    format = "png",
+    quality = 0.92,
+    width = null,
+    height = null,
+    includeEditorOverlays = false
+  } = {}) {
+    if (includeEditorOverlays) {
+      return this.app.exportRaster({ format, quality, width, height });
+    }
+
+    const previousState = {
+      transformControlsHelperVisible: this.transformControlsHelper.visible,
+      curveHandleVisible: this.curveHandle.visible,
+      selectionHelperVisible: this.selectionHelper ? this.selectionHelper.visible : null
+    };
+
+    this.transformControlsHelper.visible = false;
+    this.curveHandle.visible = false;
+    if (this.selectionHelper) {
+      this.selectionHelper.visible = false;
+    }
+
+    try {
+      return this.app.exportRaster({ format, quality, width, height });
+    } finally {
+      this.transformControlsHelper.visible = previousState.transformControlsHelperVisible;
+      this.curveHandle.visible = previousState.curveHandleVisible;
+      if (this.selectionHelper && previousState.selectionHelperVisible != null) {
+        this.selectionHelper.visible = previousState.selectionHelperVisible;
+      }
+      this.app.renderFrame();
+    }
+  }
+
   emitSelectionChange() {
     if (!this.onSelectionChange) {
       return;
