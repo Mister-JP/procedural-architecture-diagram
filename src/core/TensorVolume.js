@@ -17,8 +17,9 @@ const EDGE_VERTEX_SHADER = `
 
 const EDGE_FRAGMENT_SHADER = `
   uniform vec3 uColor;
+  uniform float uOpacity;
   void main() {
-    gl_FragColor = vec4(uColor, 1.0);
+    gl_FragColor = vec4(uColor, uOpacity);
   }
 `;
 
@@ -72,6 +73,8 @@ export class TensorVolume {
 
     const group = new THREE.Group();
     const { mesh, edges } = this.buildVolumeInstances({ voxelGeometry, edgeGeometry });
+    this.mesh = mesh;
+    this.edges = edges;
     group.add(mesh);
     group.add(edges);
 
@@ -80,11 +83,12 @@ export class TensorVolume {
 
   buildVolumeInstances({ voxelGeometry, edgeGeometry }) {
     const totalCount = this.channels * this.height * this.width;
-    const mesh = new THREE.InstancedMesh(
-      voxelGeometry,
-      new THREE.MeshBasicMaterial(),
-      totalCount
-    );
+    const fillMaterial = new THREE.MeshBasicMaterial({
+      transparent: true,
+      opacity: 1
+    });
+
+    const mesh = new THREE.InstancedMesh(voxelGeometry, fillMaterial, totalCount);
 
     const offsets = new Float32Array(totalCount * 3);
     const matrix = new THREE.Matrix4();
@@ -129,10 +133,12 @@ export class TensorVolume {
 
     const edgeMaterial = new THREE.ShaderMaterial({
       uniforms: {
-        uColor: { value: new THREE.Color(0x111111) }
+        uColor: { value: new THREE.Color(0x111111) },
+        uOpacity: { value: 1 }
       },
       vertexShader: EDGE_VERTEX_SHADER,
-      fragmentShader: EDGE_FRAGMENT_SHADER
+      fragmentShader: EDGE_FRAGMENT_SHADER,
+      transparent: true
     });
 
     const edges = new THREE.LineSegments(edgeInstances, edgeMaterial);
@@ -191,5 +197,39 @@ export class TensorVolume {
       return this.channelColor(index, this.channels);
     }
     return DEFAULT_CHANNEL_PALETTE[index % DEFAULT_CHANNEL_PALETTE.length];
+  }
+
+  setFillOpacity(opacity) {
+    if (!this.mesh || !this.mesh.material) {
+      return;
+    }
+
+    const clampedOpacity = THREE.MathUtils.clamp(opacity, 0, 1);
+    this.mesh.material.opacity = clampedOpacity;
+    this.mesh.material.transparent = clampedOpacity < 1;
+    this.mesh.material.needsUpdate = true;
+  }
+
+  setEdgeColor(colorHex) {
+    if (!this.edges || !this.edges.material) {
+      return;
+    }
+
+    if (colorHex == null) {
+      this.edges.visible = false;
+      return;
+    }
+
+    this.edges.visible = true;
+    this.edges.material.uniforms.uColor.value.set(colorHex);
+  }
+
+  setEdgeOpacity(opacity) {
+    if (!this.edges || !this.edges.material) {
+      return;
+    }
+
+    const clampedOpacity = THREE.MathUtils.clamp(opacity, 0, 1);
+    this.edges.material.uniforms.uOpacity.value = clampedOpacity;
   }
 }

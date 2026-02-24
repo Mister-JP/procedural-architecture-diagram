@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { TensorVolume } from "./TensorVolume.js";
 import { getAxisSpan, getKernelSpatialSpan } from "./tensor-math.js";
 import { createTunnelPlanes } from "./tunnel-utils.js";
+import { createLabelSprite } from "./label-utils.js";
 
 /**
  * Visualizes one convolution stage:
@@ -36,6 +37,8 @@ export class ConvolutionStageVisualization {
     kernelDisplayMode,
     highlightKernelAtInputPatch = true,
     showHighlightConnections = true,
+    showDiagramTransition = false,
+    diagramTransitionLabel = "Strided Convolution",
     kernelColor,
     filterColor
   }) {
@@ -51,7 +54,12 @@ export class ConvolutionStageVisualization {
     this.kernelLayoutMode = kernelLayoutMode ?? kernelDisplayMode ?? "bank";
     this.highlightKernelAtInputPatch = highlightKernelAtInputPatch;
     this.showHighlightConnections = showHighlightConnections;
+    this.showDiagramTransition = showDiagramTransition;
+    this.diagramTransitionLabel = diagramTransitionLabel;
     this.kernelColor = kernelColor ?? filterColor;
+    this.kernelVisible = true;
+    this.diagramMode = false;
+    this.kernelVolumes = [];
 
     this.object3d = this.build();
   }
@@ -66,10 +74,24 @@ export class ConvolutionStageVisualization {
     const group = new THREE.Group();
     const layout = this.computeLayout();
 
-    this.addKernelBank(group, layout);
-    if (this.showHighlightConnections) {
-      this.addHighlightConnections(group, layout);
+    this.kernelBankGroup = new THREE.Group();
+    this.referenceKernelGroup = new THREE.Group();
+    this.connectionGroup = new THREE.Group();
+    this.diagramGroup = new THREE.Group();
+
+    this.addKernelBank(layout);
+    this.addHighlightConnections(this.connectionGroup, layout);
+    if (this.showDiagramTransition) {
+      this.addDiagramArrow(this.diagramGroup, layout);
     }
+
+    group.add(
+      this.kernelBankGroup,
+      this.referenceKernelGroup,
+      this.connectionGroup,
+      this.diagramGroup
+    );
+    this.applyDisplayState();
 
     return group;
   }
@@ -147,7 +169,7 @@ export class ConvolutionStageVisualization {
     };
   }
 
-  addKernelBank(group, layout) {
+  addKernelBank(layout) {
     for (let i = 0; i < this.kernelCount; i += 1) {
       const row = Math.floor(i / layout.cols);
       const col = i % layout.cols;
@@ -176,30 +198,40 @@ export class ConvolutionStageVisualization {
         layerGap: this.inputVolume.layerGap,
         channelColor: () => kernelColor
       });
+      this.kernelVolumes.push(kernelVolume);
 
-      group.add(kernelVolume.object3d);
+      if (i === this.highlightedKernelIndex) {
+        this.referenceKernelGroup.add(kernelVolume.object3d);
+      } else {
+        this.kernelBankGroup.add(kernelVolume.object3d);
+      }
     }
   }
 
   addHighlightConnections(group, layout) {
     const inputPatchCenter = this.inputVolume.getKernelCenter(0, this.kernelSize);
+    const connectorCenter = new THREE.Vector3(
+      inputPatchCenter.x,
+      inputPatchCenter.y,
+      layout.bankCenterZ
+    );
 
     const outputChannelIndex = this.outputVolume.channels - 1;
     const outputPixelCenter = this.outputVolume.getCellCenter(outputChannelIndex, 0, 0);
     const outputPixelColor = this.outputVolume.getChannelColor(outputChannelIndex);
 
-    const inputToKernelDirection = Math.sign(layout.highlightedKernelCenter.z - inputPatchCenter.z) || 1;
+    const inputToKernelDirection = Math.sign(connectorCenter.z - inputPatchCenter.z) || 1;
     const kernelFaceTowardInput = new THREE.Vector3(
-      layout.highlightedKernelCenter.x,
-      layout.highlightedKernelCenter.y,
-      layout.highlightedKernelCenter.z - inputToKernelDirection * (layout.kernelDepthSpan * 0.5)
+      connectorCenter.x,
+      connectorCenter.y,
+      connectorCenter.z - inputToKernelDirection * (layout.kernelDepthSpan * 0.5)
     );
 
-    const kernelToOutputDirection = Math.sign(outputPixelCenter.z - layout.highlightedKernelCenter.z) || 1;
+    const kernelToOutputDirection = Math.sign(outputPixelCenter.z - connectorCenter.z) || 1;
     const kernelFaceTowardOutput = new THREE.Vector3(
-      layout.highlightedKernelCenter.x,
-      layout.highlightedKernelCenter.y,
-      layout.highlightedKernelCenter.z + kernelToOutputDirection * (layout.kernelDepthSpan * 0.5)
+      connectorCenter.x,
+      connectorCenter.y,
+      connectorCenter.z + kernelToOutputDirection * (layout.kernelDepthSpan * 0.5)
     );
 
     const inputToKernelTunnel = createTunnelPlanes({
@@ -236,6 +268,108 @@ export class ConvolutionStageVisualization {
     );
     outputPixelHighlight.position.copy(outputPixelCenter);
     group.add(outputPixelHighlight);
+  }
+
+  addDiagramArrow(group, layout) {
+    const start = new THREE.Vector3(
+      this.inputVolume.getCenterX(),
+      this.inputVolume.getCenterY(),
+      this.inputVolume.getCenterZ()
+    );
+    const end = new THREE.Vector3(
+      this.outputVolume.getCenterX(),
+      this.outputVolume.getCenterY(),
+      this.outputVolume.getCenterZ()
+    );
+    const direction = new THREE.Vector3().subVectors(end, start);
+    const length = direction.length();
+
+    if (length <= 0.0001) {
+      return;
+    }
+
+    direction.normalize();
+    const color = this.getKernelColor(this.highlightedKernelIndex);
+    const coneHeight = Math.max(4, length * 0.12);
+    const shaftLength = Math.max(4, length - coneHeight);
+    const shaftRadius = Math.max(0.55, layout.kernelXYSpan * 0.12);
+    const orientation = new THREE.Quaternion().setFromUnitVectors(
+      new THREE.Vector3(0, 1, 0),
+      direction
+    );
+
+    const shaft = new THREE.Mesh(
+      new THREE.CylinderGeometry(shaftRadius, shaftRadius, shaftLength, 16),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95 })
+    );
+    shaft.position.copy(
+      start.clone().add(direction.clone().multiplyScalar(shaftLength * 0.5))
+    );
+    shaft.quaternion.copy(orientation);
+    group.add(shaft);
+
+    const head = new THREE.Mesh(
+      new THREE.ConeGeometry(shaftRadius * 1.75, coneHeight, 16),
+      new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95 })
+    );
+    head.position.copy(
+      start.clone().add(direction.clone().multiplyScalar(shaftLength + coneHeight * 0.5))
+    );
+    head.quaternion.copy(orientation);
+    group.add(head);
+
+    const label = createLabelSprite(this.diagramTransitionLabel, {
+      scaleHeight: Math.max(7, layout.kernelXYSpan * 1.75)
+    });
+    const labelOffset = new THREE.Vector3();
+    labelOffset.crossVectors(direction, new THREE.Vector3(0, 1, 0));
+    if (labelOffset.lengthSq() < 0.001) {
+      labelOffset.set(1, 0, 0);
+    }
+    labelOffset.normalize().multiplyScalar(layout.kernelXYSpan * 1.3);
+    label.position.copy(start.clone().add(end).multiplyScalar(0.5).add(labelOffset));
+    group.add(label);
+  }
+
+  applyDisplayState() {
+    if (this.kernelBankGroup) {
+      this.kernelBankGroup.visible = this.kernelVisible && !this.diagramMode;
+    }
+    if (this.referenceKernelGroup) {
+      this.referenceKernelGroup.visible = true;
+    }
+    if (this.connectionGroup) {
+      this.connectionGroup.visible = true;
+    }
+    if (this.diagramGroup) {
+      this.diagramGroup.visible = this.diagramMode && this.showDiagramTransition;
+    }
+  }
+
+  setKernelVisibility(visible) {
+    this.kernelVisible = visible;
+    this.applyDisplayState();
+  }
+
+  setDiagramMode(enabled) {
+    this.diagramMode = enabled;
+    this.applyDisplayState();
+  }
+
+  setVoxelOpacity(opacity) {
+    for (const kernelVolume of this.kernelVolumes) {
+      kernelVolume.setFillOpacity(opacity);
+    }
+  }
+
+  setVoxelEdgeColor(colorHex) {
+    for (const kernelVolume of this.kernelVolumes) {
+      kernelVolume.setEdgeColor(colorHex);
+    }
+  }
+
+  getKernelVolumes() {
+    return this.kernelVolumes;
   }
 
   getKernelColor(index) {

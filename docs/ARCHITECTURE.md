@@ -7,6 +7,7 @@ The visualization is split into composable modules with clear ownership:
 - `src/core/ConvolutionStageVisualization.js`: Kernel bank and tunnel visualization between one input/output tensor pair.
 - `src/core/tensor-math.js`: Shared tensor/kernel span math used by pipeline and stage layout.
 - `src/core/tunnel-utils.js`: Shared geometry helpers for translucent tunnel planes.
+- `src/core/label-utils.js`: Shared camera-facing text label helper used by tensor/transition annotations.
 - `src/core/color-utils.js`: Shared gradient/color utilities.
 - `src/config/pipeline-config.js`: Declarative pipeline and visual style configuration.
 
