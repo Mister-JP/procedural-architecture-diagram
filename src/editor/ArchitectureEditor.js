@@ -27,6 +27,32 @@ function resolveElementIdFromIntersection(object) {
   return null;
 }
 
+function resolveBestElementIdFromIntersections(intersections) {
+  let best = null;
+
+  for (const hit of intersections) {
+    const elementId = resolveElementIdFromIntersection(hit.object);
+    if (!elementId) {
+      continue;
+    }
+
+    const renderOrder = hit.object.renderOrder ?? 0;
+    if (
+      !best ||
+      renderOrder > best.renderOrder ||
+      (renderOrder === best.renderOrder && hit.distance < best.distance)
+    ) {
+      best = {
+        elementId,
+        renderOrder,
+        distance: hit.distance
+      };
+    }
+  }
+
+  return best?.elementId ?? null;
+}
+
 export class ArchitectureEditor {
   constructor({ app, onSelectionChange, onDocumentChange }) {
     this.app = app;
@@ -107,7 +133,8 @@ export class ArchitectureEditor {
   }
 
   onPointerDown(event) {
-    if (this.isDraggingTransform) {
+    const activeTransformAxis = this.transformControls.axis;
+    if (this.isDraggingTransform || typeof activeTransformAxis === "string") {
       return;
     }
 
@@ -123,7 +150,7 @@ export class ArchitectureEditor {
       return;
     }
 
-    const elementId = resolveElementIdFromIntersection(intersections[0].object);
+    const elementId = resolveBestElementIdFromIntersections(intersections);
     this.selectElement(elementId);
   }
 
@@ -334,6 +361,22 @@ export class ArchitectureEditor {
 
     const duplicated = duplicateElementConfig(selected.toDocumentElement());
     return this.addElementInstance(duplicated, { select: true, emitDocumentChange: true });
+  }
+
+  deleteSelectedElement() {
+    if (!this.selectedId || !this.elements.has(this.selectedId)) {
+      return false;
+    }
+
+    const targetId = this.selectedId;
+    const targetElement = this.elements.get(targetId);
+    targetElement.dispose();
+    this.elements.delete(targetId);
+
+    this.selectElement(null, { emitSelection: true });
+    this.emitDocumentChange();
+    this.app.renderFrame();
+    return true;
   }
 
   getSelectedElement() {

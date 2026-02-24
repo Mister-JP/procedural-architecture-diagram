@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { createElementInstance } from "./elements/ElementFactory.js";
 import { normalizeDocument } from "./schema.js";
 
@@ -18,6 +19,13 @@ export class ElementPreview {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.container.appendChild(this.renderer.domElement);
+
+    this.controls = new OrbitControls(this.camera, this.renderer.domElement);
+    this.controls.enableDamping = true;
+    this.controls.enablePan = true;
+    this.controls.minDistance = 6;
+    this.controls.maxDistance = 2600;
+    this.controls.addEventListener("change", () => this.render());
 
     this.root = new THREE.Group();
     this.scene.add(this.root);
@@ -79,16 +87,18 @@ export class ElementPreview {
     const size = box.getSize(new THREE.Vector3());
     const maxSize = Math.max(size.x, size.y, size.z);
     const halfFov = THREE.MathUtils.degToRad(this.camera.fov * 0.5);
-    const distance = Math.max(8, (maxSize * 0.7) / Math.tan(halfFov));
+    const distance = Math.max(8, (maxSize * 0.75) / Math.tan(halfFov));
 
     this.camera.position.copy(center.clone().add(new THREE.Vector3(distance * 0.8, distance * 0.45, distance)));
-    this.camera.lookAt(center);
+    this.camera.near = Math.max(0.1, distance / 200);
+    this.camera.far = Math.max(400, distance * 8 + maxSize * 2);
+    this.camera.updateProjectionMatrix();
+    this.controls.target.copy(center);
+    this.controls.update();
   }
 
   animate() {
-    if (this.currentElement) {
-      this.root.rotation.y += 0.003;
-    }
+    this.controls.update();
     this.render();
     this.animationFrame = requestAnimationFrame(this.animate);
   }
@@ -107,6 +117,7 @@ export class ElementPreview {
     }
 
     this.resizeObserver.disconnect();
+    this.controls.dispose();
     this.renderer.dispose();
   }
 }

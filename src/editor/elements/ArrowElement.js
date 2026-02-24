@@ -111,24 +111,28 @@ export class ArrowElement extends BaseElement {
     { dotted, color, opacity, length, thickness, headLength, headWidth, dashSize = 2.5, gapSize = 1.3 }
   ) {
     const startX = -length * 0.5;
-    const endX = length * 0.5 - headLength;
-    const points = [new THREE.Vector3(startX, 0, 0), new THREE.Vector3(endX, 0, 0)];
+    const tipX = length * 0.5;
+    const headBaseX = tipX - headLength;
+    const points = [new THREE.Vector3(startX, 0, 0), new THREE.Vector3(headBaseX, 0, 0)];
+    const lineMaterial = createLineMaterial({ dotted, color, opacity, thickness, dashSize, gapSize });
 
-    const line = new THREE.Line(
-      new THREE.BufferGeometry().setFromPoints(points),
-      createLineMaterial({ dotted, color, opacity, thickness, dashSize, gapSize })
-    );
+    const line = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), lineMaterial);
 
     if (dotted) {
       line.computeLineDistances();
     }
 
-    const head = new THREE.Mesh(
-      new THREE.ConeGeometry(headWidth, headLength, 16),
-      createSolidMaterial(color, opacity)
-    );
-    head.rotation.z = -Math.PI * 0.5;
-    head.position.x = length * 0.5 - headLength * 0.5;
+    const headHalfWidth = headWidth * 0.5;
+    const headPoints = [
+      new THREE.Vector3(headBaseX, headHalfWidth, 0),
+      new THREE.Vector3(tipX, 0, 0),
+      new THREE.Vector3(headBaseX, -headHalfWidth, 0)
+    ];
+    const head = new THREE.Line(new THREE.BufferGeometry().setFromPoints(headPoints), lineMaterial.clone());
+
+    if (dotted) {
+      head.computeLineDistances();
+    }
 
     group.add(line, head);
   }

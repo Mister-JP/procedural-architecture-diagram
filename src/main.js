@@ -83,6 +83,7 @@ let inspectorTitle;
 let inspectorSubtitle;
 let inspectorFields;
 let inspectorActionButton;
+let inspectorDeleteButton;
 let preview;
 let importInput;
 
@@ -700,6 +701,7 @@ function renderInspector(editor) {
   inspectorFields.innerHTML = "";
 
   const isCreate = uiState.inspectorMode === "create";
+  const isEdit = !isCreate;
   inspectorTitle.textContent = isCreate ? "Create Element" : "Edit Element";
   inspectorSubtitle.textContent = isCreate
     ? "Configure and add reusable building blocks"
@@ -728,6 +730,8 @@ function renderInspector(editor) {
 
   inspectorActionButton.textContent = isCreate ? "Add To Canvas" : "Apply Changes";
   inspectorActionButton.classList.toggle("create-action", isCreate);
+  inspectorDeleteButton.hidden = !isEdit;
+  inspectorDeleteButton.disabled = !isEdit;
   preview.setElementConfig(uiState.draftElement);
 }
 
@@ -986,12 +990,30 @@ inspectorActionButton.addEventListener("click", () => {
   }
 });
 
+inspectorDeleteButton = createButton("Remove From Canvas", {
+  className: "tool-button inspector-delete"
+});
+inspectorDeleteButton.hidden = true;
+inspectorDeleteButton.addEventListener("click", () => {
+  if (uiState.inspectorMode !== "edit") {
+    return;
+  }
+
+  disableCurveHandleEditing(editor);
+  const deleted = editor.deleteSelectedElement();
+  if (deleted) {
+    uiState.selectedElement = null;
+    openCreateInspector(uiState.draftElement.type, editor);
+  }
+});
+
 rightPanel.append(
   rightHeader,
   previewContainer,
   curveHandleStatus,
   inspectorFields,
-  inspectorActionButton
+  inspectorActionButton,
+  inspectorDeleteButton
 );
 
 rightPanelShowButton = createButton("Show Inspector", { className: "panel-show-button" });

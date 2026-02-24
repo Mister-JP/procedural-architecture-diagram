@@ -299,6 +299,17 @@ canvas {
   background: #1d6ea8;
 }
 
+.inspector-delete {
+  margin-top: 8px;
+  margin-bottom: 0;
+  border-color: rgba(255, 166, 156, 0.7);
+  background: rgba(108, 32, 27, 0.92);
+}
+
+.inspector-delete:hover {
+  background: rgba(132, 40, 34, 0.95);
+}
+
 @media (max-width: 900px) {
   .left-dock,
   .right-dock {
