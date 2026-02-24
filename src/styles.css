@@ -326,6 +326,81 @@ canvas {
   background: rgba(132, 40, 34, 0.95);
 }
 
+.view-gizmo {
+  position: fixed;
+  right: 18px;
+  bottom: 18px;
+  z-index: 35;
+  width: min(214px, calc(100vw - 36px));
+  border: 1px solid rgba(166, 223, 255, 0.52);
+  border-radius: 12px;
+  padding: 10px;
+  background: rgba(10, 24, 43, 0.9);
+  backdrop-filter: blur(6px);
+  box-shadow: 0 14px 28px rgba(0, 0, 0, 0.3);
+}
+
+.view-gizmo-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.view-gizmo-title {
+  margin: 0;
+  color: #d8f2ff;
+  font: 800 11px/1 "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
+  letter-spacing: 0.38px;
+  text-transform: uppercase;
+}
+
+.view-gizmo-status {
+  margin: 0;
+  color: #8fc7df;
+  font: 700 11px/1 "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
+}
+
+.view-gizmo-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.view-gizmo-button {
+  appearance: none;
+  border: 1px solid rgba(173, 228, 255, 0.58);
+  border-radius: 8px;
+  min-height: 30px;
+  color: var(--text-main);
+  background: rgba(19, 49, 78, 0.94);
+  font: 700 11px/1 "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
+  letter-spacing: 0.24px;
+  cursor: pointer;
+  transition: background 0.16s ease;
+}
+
+.view-gizmo-button:hover {
+  background: rgba(31, 69, 107, 0.95);
+}
+
+.view-gizmo-button.active {
+  border-color: rgba(255, 226, 153, 0.95);
+  background: rgba(128, 89, 32, 0.95);
+}
+
+.view-gizmo-button-accent {
+  width: 100%;
+  margin-top: 2px;
+  background: rgba(13, 95, 139, 0.92);
+}
+
+.view-gizmo-button-accent:hover {
+  background: rgba(19, 113, 163, 0.95);
+}
+
 @media (max-width: 900px) {
   .left-dock,
   .right-dock {
@@ -344,6 +419,12 @@ canvas {
   .inspector-panel {
     width: min(320px, calc(100vw - 20px));
     max-height: calc(100vh - 20px);
+  }
+
+  .view-gizmo {
+    right: 10px;
+    bottom: 10px;
+    width: min(206px, calc(100vw - 20px));
   }
 }
 

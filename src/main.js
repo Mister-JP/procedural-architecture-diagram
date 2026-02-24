@@ -109,11 +109,25 @@ let inspectorActionButton;
 let inspectorDeleteButton;
 let preview;
 let importInput;
+let viewModeStatus;
+let viewPlaneButtons = {};
 
 function applyTransformModeButtonState(mode) {
   const isMove = mode === "translate";
   moveModeButton.classList.toggle("active", isMove);
   rotateModeButton.classList.toggle("active", !isMove);
+}
+
+function syncViewPlaneControls(editor) {
+  const activePlane = editor.getViewPlane();
+
+  for (const [plane, button] of Object.entries(viewPlaneButtons)) {
+    button.classList.toggle("active", activePlane === plane);
+  }
+
+  if (viewModeStatus) {
+    viewModeStatus.textContent = activePlane ? `${activePlane} plane` : "3D free";
+  }
 }
 
 function disableCurveHandleEditing(editor) {
@@ -575,6 +589,85 @@ function renderArrowInspector(editor) {
   });
 }
 
+function renderFrustumInspector(editor) {
+  const frustum = uiState.draftElement.data;
+
+  addSectionTitle(inspectorFields, "Geometry");
+  addNumberField(inspectorFields, {
+    label: "Top Size",
+    value: frustum.topSize,
+    min: 0.2,
+    max: 2000,
+    step: 0.1,
+    onInput: (value) => {
+      uiState.draftElement.data.topSize = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addNumberField(inspectorFields, {
+    label: "Bottom Size",
+    value: frustum.bottomSize,
+    min: 0.2,
+    max: 2000,
+    step: 0.1,
+    onInput: (value) => {
+      uiState.draftElement.data.bottomSize = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addNumberField(inspectorFields, {
+    label: "Length",
+    value: frustum.length,
+    min: 0.2,
+    max: 2000,
+    step: 0.1,
+    onInput: (value) => {
+      uiState.draftElement.data.length = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+
+  addSectionTitle(inspectorFields, "Appearance");
+  addColorField(inspectorFields, {
+    label: "Color",
+    value: frustum.color,
+    onInput: (value) => {
+      uiState.draftElement.data.color = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addRangeField(inspectorFields, {
+    label: "Opacity",
+    value: frustum.opacity,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    onInput: (value) => {
+      uiState.draftElement.data.opacity = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addColorField(inspectorFields, {
+    label: "Border Color",
+    value: frustum.borderColor,
+    onInput: (value) => {
+      uiState.draftElement.data.borderColor = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addRangeField(inspectorFields, {
+    label: "Border Opacity",
+    value: frustum.borderOpacity,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    onInput: (value) => {
+      uiState.draftElement.data.borderOpacity = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+}
+
 function renderLabelInspector(editor) {
   const label = uiState.draftElement.data;
 
@@ -743,6 +836,8 @@ function renderInspector(editor) {
     renderTensorInspector(editor);
   } else if (uiState.draftElement.type === ELEMENT_TYPES.arrow) {
     renderArrowInspector(editor);
+  } else if (uiState.draftElement.type === ELEMENT_TYPES.frustum) {
+    renderFrustumInspector(editor);
   } else {
     renderLabelInspector(editor);
   }
@@ -831,6 +926,11 @@ const createLabelButton = createButton("T Create Label", {
   title: "Create a label"
 });
 createLabelButton.addEventListener("click", () => openCreateInspector(ELEMENT_TYPES.label, editor));
+
+const createFrustumButton = createButton("[] Create Frustum", {
+  title: "Create a truncated square pyramid"
+});
+createFrustumButton.addEventListener("click", () => openCreateInspector(ELEMENT_TYPES.frustum, editor));
 
 duplicateButton = createButton("Duplicate Selected");
 duplicateButton.disabled = true;
@@ -981,13 +1081,14 @@ importInput.addEventListener("change", async () => {
 const leftHelp = document.createElement("p");
 leftHelp.className = "panel-help";
 leftHelp.textContent =
-  "Click an element in canvas to edit. Use Move/Rotate to reposition selected objects.";
+  "Double-click a rotate axis to snap 90°. Move mode shows temporary alignment guides and snapping.";
 
 leftPanel.append(
   leftHeader,
   createTensorButton,
   createArrowButton,
   createLabelButton,
+  createFrustumButton,
   duplicateButton,
   transformSection,
   fitViewButton,
@@ -1103,7 +1204,83 @@ rightPanelShowButton.addEventListener("click", showRightPanel);
 
 rightDock.append(rightPanel, rightPanelShowButton);
 
-document.body.append(leftDock, rightDock, importInput);
+const viewGizmo = document.createElement("section");
+viewGizmo.className = "view-gizmo";
+
+const viewGizmoHeader = document.createElement("div");
+viewGizmoHeader.className = "view-gizmo-header";
+
+const viewGizmoTitle = document.createElement("p");
+viewGizmoTitle.className = "view-gizmo-title";
+viewGizmoTitle.textContent = "View Gizmo";
+
+viewModeStatus = document.createElement("p");
+viewModeStatus.className = "view-gizmo-status";
+viewModeStatus.textContent = "3D free";
+
+viewGizmoHeader.append(viewGizmoTitle, viewModeStatus);
+
+const axisButtonRow = document.createElement("div");
+axisButtonRow.className = "view-gizmo-row";
+
+const alignXButton = createButton("X", { className: "view-gizmo-button" });
+const alignYButton = createButton("Y", { className: "view-gizmo-button" });
+const alignZButton = createButton("Z", { className: "view-gizmo-button" });
+
+alignXButton.addEventListener("click", () => {
+  editor.alignViewToAxis("X");
+  syncViewPlaneControls(editor);
+});
+alignYButton.addEventListener("click", () => {
+  editor.alignViewToAxis("Y");
+  syncViewPlaneControls(editor);
+});
+alignZButton.addEventListener("click", () => {
+  editor.alignViewToAxis("Z");
+  syncViewPlaneControls(editor);
+});
+
+axisButtonRow.append(alignXButton, alignYButton, alignZButton);
+
+const planeButtonRow = document.createElement("div");
+planeButtonRow.className = "view-gizmo-row";
+
+const xyPlaneButton = createButton("XY", { className: "view-gizmo-button" });
+const yzPlaneButton = createButton("YZ", { className: "view-gizmo-button" });
+const xzPlaneButton = createButton("XZ", { className: "view-gizmo-button" });
+
+viewPlaneButtons = {
+  XY: xyPlaneButton,
+  YZ: yzPlaneButton,
+  XZ: xzPlaneButton
+};
+
+for (const [plane, button] of Object.entries(viewPlaneButtons)) {
+  button.addEventListener("click", () => {
+    if (editor.getViewPlane() === plane) {
+      editor.clearViewPlane();
+    } else {
+      editor.setViewPlane(plane);
+    }
+    syncViewPlaneControls(editor);
+  });
+}
+
+planeButtonRow.append(xyPlaneButton, yzPlaneButton, xzPlaneButton);
+
+const clearPlaneButton = createButton("3D", {
+  className: "view-gizmo-button view-gizmo-button-accent"
+});
+clearPlaneButton.addEventListener("click", () => {
+  editor.clearViewPlane();
+  syncViewPlaneControls(editor);
+});
+
+viewGizmo.append(viewGizmoHeader, axisButtonRow, planeButtonRow, clearPlaneButton);
+
+syncViewPlaneControls(editor);
+
+document.body.append(leftDock, rightDock, viewGizmo, importInput);
 
 preview = new ElementPreview(previewViewport);
 openCreateInspector(ELEMENT_TYPES.tensor, editor);

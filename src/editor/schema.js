@@ -5,7 +5,8 @@ export { DOCUMENT_VERSION };
 export const ELEMENT_TYPES = {
   tensor: "tensor",
   arrow: "arrow",
-  label: "label"
+  label: "label",
+  frustum: "frustum"
 };
 
 const DEFAULT_SCENE = {
@@ -56,6 +57,16 @@ const DEFAULT_LABEL_DATA = {
   borderWidth: 5,
   padding: 20,
   scaleHeight: 10
+};
+
+const DEFAULT_FRUSTUM_DATA = {
+  topSize: 18,
+  bottomSize: 32,
+  length: 36,
+  color: "#7bc5ff",
+  opacity: 1,
+  borderColor: "#111111",
+  borderOpacity: 1
 };
 
 const DEFAULT_TRANSFORM = {
@@ -182,6 +193,18 @@ function normalizeLabelData(data) {
   };
 }
 
+function normalizeFrustumData(data) {
+  return {
+    topSize: clamp(data?.topSize, 0.2, 2000, DEFAULT_FRUSTUM_DATA.topSize),
+    bottomSize: clamp(data?.bottomSize, 0.2, 2000, DEFAULT_FRUSTUM_DATA.bottomSize),
+    length: clamp(data?.length, 0.2, 2000, DEFAULT_FRUSTUM_DATA.length),
+    color: asColor(data?.color, DEFAULT_FRUSTUM_DATA.color),
+    opacity: clamp(data?.opacity, 0, 1, DEFAULT_FRUSTUM_DATA.opacity),
+    borderColor: asColor(data?.borderColor, DEFAULT_FRUSTUM_DATA.borderColor),
+    borderOpacity: clamp(data?.borderOpacity, 0, 1, DEFAULT_FRUSTUM_DATA.borderOpacity)
+  };
+}
+
 function normalizeElementName(type, name) {
   if (typeof name === "string" && name.trim().length > 0) {
     return name.trim();
@@ -192,6 +215,9 @@ function normalizeElementName(type, name) {
   }
   if (type === ELEMENT_TYPES.arrow) {
     return "Arrow";
+  }
+  if (type === ELEMENT_TYPES.frustum) {
+    return "Frustum";
   }
   return "Label";
 }
@@ -212,8 +238,10 @@ function normalizeElement(rawElement) {
     base.data = normalizeTensorData(rawElement?.data);
   } else if (type === ELEMENT_TYPES.arrow) {
     base.data = normalizeArrowData(rawElement?.data);
-  } else {
+  } else if (type === ELEMENT_TYPES.label) {
     base.data = normalizeLabelData(rawElement?.data);
+  } else {
+    base.data = normalizeFrustumData(rawElement?.data);
   }
 
   return base;

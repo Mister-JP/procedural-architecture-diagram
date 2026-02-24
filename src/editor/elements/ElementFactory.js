@@ -2,6 +2,7 @@ import { ELEMENT_TYPES } from "../schema.js";
 import { TensorElement } from "./TensorElement.js";
 import { ArrowElement } from "./ArrowElement.js";
 import { LabelElement } from "./LabelElement.js";
+import { FrustumElement } from "./FrustumElement.js";
 
 export function createElementInstance(config) {
   if (config.type === ELEMENT_TYPES.tensor) {
@@ -14,6 +15,10 @@ export function createElementInstance(config) {
 
   if (config.type === ELEMENT_TYPES.label) {
     return new LabelElement(config);
+  }
+
+  if (config.type === ELEMENT_TYPES.frustum) {
+    return new FrustumElement(config);
   }
 
   throw new Error(`Unsupported element type: ${config.type}`);
