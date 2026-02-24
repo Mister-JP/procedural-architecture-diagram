@@ -19,13 +19,109 @@ export const SCENE_CONFIG = {
   cameraPosition: new THREE.Vector3(0, 0, 260)
 };
 
+function createStageColors({
+  outputStart,
+  outputEnd,
+  kernelStart = outputEnd,
+  kernelEnd = outputStart
+}) {
+  return {
+    outputChannelColor: createGradientResolver(outputStart, outputEnd),
+    kernelColor: createGradientResolver(kernelStart, kernelEnd)
+  };
+}
+
+function createConvolutionStage({
+  outputChannels,
+  outputShape,
+  kernelSize = 3,
+  kernelCount = outputChannels,
+  kernelLayoutMode = "bank",
+  highlightKernelAtInputPatch = true,
+  showHighlightConnections = true,
+  alignCenterXWithInput = false,
+  xOffsetFromInput = 0,
+  yOffsetFromInput = 0,
+  zOffsetFromInput = 75,
+  outputChannelColor,
+  kernelColor,
+  showStageVisualization = true
+}) {
+  const stage = {
+    outputChannels,
+    kernelSize,
+    outputChannelColor,
+    kernelColor
+  };
+
+  if (outputShape) {
+    stage.outputShape = outputShape;
+  }
+
+  if (kernelCount !== outputChannels) {
+    stage.kernelCount = kernelCount;
+  }
+
+  if (kernelLayoutMode !== "bank") {
+    stage.kernelLayoutMode = kernelLayoutMode;
+  }
+
+  if (!highlightKernelAtInputPatch) {
+    stage.highlightKernelAtInputPatch = false;
+  }
+
+  if (!showHighlightConnections) {
+    stage.showHighlightConnections = false;
+  }
+
+  if (alignCenterXWithInput) {
+    stage.alignCenterXWithInput = true;
+  }
+
+  if (xOffsetFromInput !== 0) {
+    stage.xOffsetFromInput = xOffsetFromInput;
+  }
+
+  if (yOffsetFromInput !== 0) {
+    stage.yOffsetFromInput = yOffsetFromInput;
+  }
+
+  if (zOffsetFromInput !== 75) {
+    stage.zOffsetFromInput = zOffsetFromInput;
+  }
+
+  if (!showStageVisualization) {
+    stage.showStageVisualization = false;
+  }
+
+  return stage;
+}
+
+const STAGE_COLORS = {
+  gold: createStageColors({
+    outputStart: 0xfff7bf,
+    outputEnd: 0xffe100
+  }),
+  blue: createStageColors({
+    outputStart: 0x8fd3ff,
+    outputEnd: 0x0a2a8f
+  }),
+  red: createStageColors({
+    outputStart: 0xff7676,
+    outputEnd: 0x4a0606,
+    kernelStart: 0x8e0b0b,
+    kernelEnd: 0xff7676
+  })
+};
+
 /**
  * Pipeline definition.
  *
  * Contract:
  * - Each stage consumes the previous tensor as input.
- * - Each stage produces an output tensor with the same HxW and configured channels.
- * - Each stage adds a kernel-bank visualization between input and output.
+ * - Each stage produces an output feature map volume.
+ * - For standard convolution, kernelCount defaults to outputChannels.
+ * - Stage visualization renders a kernel bank and optional highlight connections.
  */
 export const PIPELINE_CONFIG = {
   input: {
@@ -34,58 +130,43 @@ export const PIPELINE_CONFIG = {
     channelColor: createGradientResolver(0xff7676, 0x4a0606)
   },
   stages: [
-    {
+    createConvolutionStage({
       outputChannels: 32,
-      kernelSize: 3,
-      filterCount: 32,
       zOffsetFromInput: 75,
-      outputColor: createGradientResolver(0xfff7bf, 0xffe100),
-      kernelColor: createGradientResolver(0xffe100, 0xfff7bf)
-    },
-    {
+      ...STAGE_COLORS.gold
+    }),
+    createConvolutionStage({
       outputChannels: 32,
-      kernelSize: 3,
-      filterCount: 32,
       zOffsetFromInput: 75,
-      outputColor: createGradientResolver(0x8fd3ff, 0x0a2a8f),
-      kernelColor: createGradientResolver(0x0a2a8f, 0x8fd3ff)
-    },
-    {
+      ...STAGE_COLORS.blue
+    }),
+    createConvolutionStage({
       outputChannels: 32,
       outputShape: [32, 64, 64],
-      kernelSize: 3,
-      filterCount: 32,
-      kernelDisplayMode: "between-volumes",
+      kernelLayoutMode: "between-volumes",
       highlightKernelAtInputPatch: false,
       showHighlightConnections: false,
       alignCenterXWithInput: true,
       yOffsetFromInput: -208,
       zOffsetFromInput: 0,
-      outputColor: createGradientResolver(0xff7676, 0x4a0606),
-      kernelColor: createGradientResolver(0x8e0b0b, 0xff7676)
-    },
-    {
+      ...STAGE_COLORS.red
+    }),
+    createConvolutionStage({
       outputChannels: 64,
       outputShape: [64, 64, 64],
-      kernelSize: 3,
-      filterCount: 64,
-      kernelDisplayMode: "between-volumes",
+      kernelLayoutMode: "between-volumes",
       alignCenterXWithInput: true,
       yOffsetFromInput: 0,
       zOffsetFromInput: 125,
-      outputColor: createGradientResolver(0xfff7bf, 0xffe100),
-      kernelColor: createGradientResolver(0xffe100, 0xfff7bf)
-    },
-    {
+      ...STAGE_COLORS.gold
+    }),
+    createConvolutionStage({
       outputChannels: 64,
       outputShape: [64, 64, 64],
-      kernelSize: 3,
-      filterCount: 64,
       alignCenterXWithInput: true,
       yOffsetFromInput: 0,
       zOffsetFromInput: 160,
-      outputColor: createGradientResolver(0x8fd3ff, 0x0a2a8f),
-      kernelColor: createGradientResolver(0x0a2a8f, 0x8fd3ff)
-    }
+      ...STAGE_COLORS.blue
+    })
   ]
 };

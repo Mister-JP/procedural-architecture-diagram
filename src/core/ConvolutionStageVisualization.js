@@ -1,10 +1,11 @@
 import * as THREE from "three";
 import { TensorVolume } from "./TensorVolume.js";
+import { getAxisSpan, getKernelSpatialSpan } from "./tensor-math.js";
 import { createTunnelPlanes } from "./tunnel-utils.js";
 
 /**
  * Visualizes one convolution stage:
- * - Kernel bank (filterCount kernels, each channels x kernelSize x kernelSize)
+ * - Kernel bank (kernelCount kernels, each channels x kernelSize x kernelSize)
  * - One highlighted kernel near the input receptive field
  * - Input->kernel and kernel->output translucent tunnel connections
  */
@@ -14,33 +15,43 @@ export class ConvolutionStageVisualization {
    * @param {TensorVolume} options.inputVolume - Stage input tensor.
    * @param {TensorVolume} options.outputVolume - Stage output tensor.
    * @param {number} [options.kernelSize=3] - Spatial kernel size.
-   * @param {number} [options.filterCount=32] - Number of kernels.
+   * @param {number} [options.kernelCount=32] - Number of kernels.
+   * @param {number} [options.filterCount] - Deprecated alias for kernelCount.
    * @param {number} [options.kernelGridColumns=8] - Kernels per row in bank layout.
    * @param {number} [options.highlightedKernelIndex=0] - Kernel index to highlight.
-   * @param {(index: number, count: number) => number} [options.filterColor] - Kernel color resolver.
+   * @param {"bank" | "between-volumes"} [options.kernelLayoutMode="bank"] - Kernel layout mode.
+   * @param {"bank" | "between-volumes"} [options.kernelDisplayMode] - Deprecated alias for kernelLayoutMode.
+   * @param {(index: number, count: number) => number} [options.kernelColor] - Kernel color resolver.
+   * @param {(index: number, count: number) => number} [options.filterColor] - Deprecated alias for kernelColor.
    */
   constructor({
     inputVolume,
     outputVolume,
     kernelSize = 3,
-    filterCount = 32,
+    kernelCount,
+    filterCount,
     kernelGridColumns = 8,
     highlightedKernelIndex = 0,
-    kernelDisplayMode = "bank",
+    kernelLayoutMode,
+    kernelDisplayMode,
     highlightKernelAtInputPatch = true,
     showHighlightConnections = true,
+    kernelColor,
     filterColor
   }) {
     this.inputVolume = inputVolume;
     this.outputVolume = outputVolume;
     this.kernelSize = kernelSize;
-    this.filterCount = filterCount;
+    this.kernelCount = Math.max(1, kernelCount ?? filterCount ?? 32);
     this.kernelGridColumns = kernelGridColumns;
-    this.highlightedKernelIndex = highlightedKernelIndex;
-    this.kernelDisplayMode = kernelDisplayMode;
+    this.highlightedKernelIndex = Math.max(
+      0,
+      Math.min(highlightedKernelIndex, this.kernelCount - 1)
+    );
+    this.kernelLayoutMode = kernelLayoutMode ?? kernelDisplayMode ?? "bank";
     this.highlightKernelAtInputPatch = highlightKernelAtInputPatch;
     this.showHighlightConnections = showHighlightConnections;
-    this.filterColor = filterColor;
+    this.kernelColor = kernelColor ?? filterColor;
 
     this.object3d = this.build();
   }
@@ -58,25 +69,20 @@ export class ConvolutionStageVisualization {
   }
 
   computeLayout() {
-    const kernelXYSpan = this.kernelSize * this.inputVolume.pixelSize + (this.kernelSize - 1) * this.inputVolume.gap;
-    const kernelDepthSpan =
-      this.inputVolume.channels * this.inputVolume.pixelDepth +
-      (this.inputVolume.channels - 1) * this.inputVolume.layerGap;
-    const inputHeightSpan =
-      this.inputVolume.height * this.inputVolume.pixelSize +
-      (this.inputVolume.height - 1) * this.inputVolume.gap;
-    const outputHeightSpan =
-      this.outputVolume.height * this.outputVolume.pixelSize +
-      (this.outputVolume.height - 1) * this.outputVolume.gap;
-    const outputDepthSpan =
-      this.outputVolume.channels * this.outputVolume.pixelDepth +
-      (this.outputVolume.channels - 1) * this.outputVolume.layerGap;
+    const kernelXYSpan = getKernelSpatialSpan(
+      this.kernelSize,
+      this.inputVolume.pixelSize,
+      this.inputVolume.gap
+    );
+    const kernelDepthSpan = this.inputVolume.getDepthSpan();
+    const inputHeightSpan = this.inputVolume.getHeightSpan();
+    const outputHeightSpan = this.outputVolume.getHeightSpan();
+    const outputDepthSpan = this.outputVolume.getDepthSpan();
     const cols = this.kernelGridColumns;
-    const rows = Math.ceil(this.filterCount / cols);
-    const cellStep = kernelXYSpan + 1.15;
-
-    const bankWidth = cols * kernelXYSpan + (cols - 1) * (cellStep - kernelXYSpan);
-    const bankHeight = rows * kernelXYSpan + (rows - 1) * (cellStep - kernelXYSpan);
+    const rows = Math.ceil(this.kernelCount / cols);
+    const bankCellStep = kernelXYSpan + 1.15;
+    const bankWidth = getAxisSpan(cols, kernelXYSpan, bankCellStep - kernelXYSpan);
+    const bankHeight = getAxisSpan(rows, kernelXYSpan, bankCellStep - kernelXYSpan);
 
     const inputCenterX = this.inputVolume.getCenterX();
     const inputCenterY = this.inputVolume.getCenterY();
@@ -89,7 +95,7 @@ export class ConvolutionStageVisualization {
     let bankCenterY = inputCenterY;
     let bankCenterZ = (inputCenterZ + outputCenterZ) * 0.5;
 
-    if (this.kernelDisplayMode === "between-volumes") {
+    if (this.kernelLayoutMode === "between-volumes") {
       bankCenterX = (inputCenterX + outputCenterX) * 0.5;
 
       const deltaY = outputCenterY - inputCenterY;
@@ -113,8 +119,8 @@ export class ConvolutionStageVisualization {
     const highlightedKernelRow = Math.floor(this.highlightedKernelIndex / cols);
     const highlightedKernelCol = this.highlightedKernelIndex % cols;
     const highlightedGridCenter = new THREE.Vector3(
-      bankStartX + highlightedKernelCol * cellStep,
-      bankTopY - highlightedKernelRow * cellStep,
+      bankStartX + highlightedKernelCol * bankCellStep,
+      bankTopY - highlightedKernelRow * bankCellStep,
       bankCenterZ
     );
 
@@ -125,7 +131,7 @@ export class ConvolutionStageVisualization {
 
     return {
       cols,
-      cellStep,
+      bankCellStep,
       bankCenterZ,
       bankStartX,
       bankTopY,
@@ -136,18 +142,18 @@ export class ConvolutionStageVisualization {
   }
 
   addKernelBank(group, layout) {
-    for (let i = 0; i < this.filterCount; i += 1) {
+    for (let i = 0; i < this.kernelCount; i += 1) {
       const row = Math.floor(i / layout.cols);
       const col = i % layout.cols;
 
       const gridCenter = new THREE.Vector3(
-        layout.bankStartX + col * layout.cellStep,
-        layout.bankTopY - row * layout.cellStep,
+        layout.bankStartX + col * layout.bankCellStep,
+        layout.bankTopY - row * layout.bankCellStep,
         layout.bankCenterZ
       );
 
       const displayCenter = i === this.highlightedKernelIndex ? layout.highlightedKernelCenter : gridCenter;
-      const kernelColor = this.getFilterColor(i);
+      const kernelColor = this.getKernelColor(i);
 
       const kernelUpperLeft = new THREE.Vector3(
         displayCenter.x - layout.kernelXYSpan * 0.5,
@@ -197,7 +203,7 @@ export class ConvolutionStageVisualization {
       endCenter: kernelFaceTowardInput,
       endWidth: layout.kernelXYSpan,
       endHeight: layout.kernelXYSpan,
-      color: this.getFilterColor(this.highlightedKernelIndex),
+      color: this.getKernelColor(this.highlightedKernelIndex),
       opacity: 0.18
     });
     group.add(inputToKernelTunnel);
@@ -226,10 +232,15 @@ export class ConvolutionStageVisualization {
     group.add(outputPixelHighlight);
   }
 
-  getFilterColor(index) {
-    if (this.filterColor) {
-      return this.filterColor(index, this.filterCount);
+  getKernelColor(index) {
+    if (this.kernelColor) {
+      return this.kernelColor(index, this.kernelCount);
     }
     return 0xffb347;
+  }
+
+  // Backward compatibility for older integrations that used filter nomenclature.
+  getFilterColor(index) {
+    return this.getKernelColor(index);
   }
 }

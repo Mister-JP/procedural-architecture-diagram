@@ -1,6 +1,7 @@
 import * as THREE from "three";
+import { getAxisSpan } from "./tensor-math.js";
 
-const DEFAULT_LAYER_PALETTE = [
+const DEFAULT_CHANNEL_PALETTE = [
   0x2e6cff, 0xff3b30, 0xffd60a, 0xffffff, 0xff9500, 0xff2d92, 0xff7a00, 0x34c759,
   0xaf52de, 0x00c7be, 0x5ac8fa, 0xff6482, 0xa2845e, 0x8e8e93, 0x64d2ff, 0xff375f,
   0x30d158, 0x7d7aff, 0xff9f0a, 0xbf5af2, 0x66d4cf, 0xfc3f6d, 0xe5e5ea
@@ -145,7 +146,7 @@ export class TensorVolume {
   }
 
   getKernelCenter(channel, kernelSize = 3) {
-    const kernelSpan = kernelSize * this.pixelSize + (kernelSize - 1) * this.gap;
+    const kernelSpan = getAxisSpan(kernelSize, this.pixelSize, this.gap);
     return new THREE.Vector3(
       this.upperLeft.x + kernelSpan * 0.5,
       this.upperLeft.y - kernelSpan * 0.5,
@@ -153,29 +154,38 @@ export class TensorVolume {
     );
   }
 
+  getWidthSpan() {
+    return getAxisSpan(this.width, this.pixelSize, this.gap);
+  }
+
+  getHeightSpan() {
+    return getAxisSpan(this.height, this.pixelSize, this.gap);
+  }
+
+  getDepthSpan() {
+    return getAxisSpan(this.channels, this.pixelDepth, this.layerGap);
+  }
+
   getCenterX() {
-    const totalWidth = this.width * this.pixelSize + (this.width - 1) * this.gap;
-    return this.upperLeft.x + totalWidth * 0.5;
+    return this.upperLeft.x + this.getWidthSpan() * 0.5;
   }
 
   getCenterY() {
-    const totalHeight = this.height * this.pixelSize + (this.height - 1) * this.gap;
-    return this.upperLeft.y - totalHeight * 0.5;
+    return this.upperLeft.y - this.getHeightSpan() * 0.5;
   }
 
   getCenterZ() {
-    const totalDepth = this.channels * this.pixelDepth + (this.channels - 1) * this.layerGap;
-    return this.upperLeft.z - totalDepth * 0.5;
+    return this.upperLeft.z - this.getDepthSpan() * 0.5;
   }
 
   getRightEdgeX() {
-    return this.upperLeft.x + this.width * this.pixelSize + (this.width - 1) * this.gap;
+    return this.upperLeft.x + this.getWidthSpan();
   }
 
   getChannelColor(index) {
     if (this.channelColor) {
       return this.channelColor(index, this.channels);
     }
-    return DEFAULT_LAYER_PALETTE[index % DEFAULT_LAYER_PALETTE.length];
+    return DEFAULT_CHANNEL_PALETTE[index % DEFAULT_CHANNEL_PALETTE.length];
   }
 }

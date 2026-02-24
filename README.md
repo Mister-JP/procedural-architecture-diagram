@@ -14,6 +14,7 @@ Three.js app that visualizes a multi-stage convolution pipeline with reusable te
 - `src/core/SceneApp.js`: scene/renderer/camera lifecycle
 - `src/core/TensorVolume.js`: reusable voxel tensor renderer
 - `src/core/ConvolutionStageVisualization.js`: reusable convolution stage visualizer
+- `src/core/tensor-math.js`: shared tensor/kernel span helpers
 - `src/core/tunnel-utils.js`: translucent tunnel geometry helpers
 - `src/core/color-utils.js`: color gradient helpers
 - `src/config/pipeline-config.js`: declarative pipeline + style config
