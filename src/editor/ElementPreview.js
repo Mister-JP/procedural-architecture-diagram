@@ -3,6 +3,10 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { createElementInstance } from "./elements/ElementFactory.js";
 import { normalizeDocument } from "./schema.js";
 
+const PREVIEW_MIN_NEAR = 0.05;
+const PREVIEW_MIN_FAR = 3000;
+const PREVIEW_MAX_FAR = 120000;
+
 function sanitizeElementConfig(config) {
   return normalizeDocument({ elements: [config] }).elements[0];
 }
@@ -13,7 +17,7 @@ export class ElementPreview {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color("#101a2d");
 
-    this.camera = new THREE.PerspectiveCamera(38, 1, 0.1, 5000);
+    this.camera = new THREE.PerspectiveCamera(38, 1, PREVIEW_MIN_NEAR, PREVIEW_MIN_FAR);
     this.camera.position.set(0, 0, 90);
 
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -23,8 +27,9 @@ export class ElementPreview {
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
     this.controls.enablePan = true;
+    this.controls.zoomSpeed = 0.75;
     this.controls.minDistance = 6;
-    this.controls.maxDistance = 2600;
+    this.controls.maxDistance = 20000;
     this.controls.addEventListener("change", () => this.render());
 
     this.root = new THREE.Group();
@@ -90,15 +95,39 @@ export class ElementPreview {
     const distance = Math.max(8, (maxSize * 0.75) / Math.tan(halfFov));
 
     this.camera.position.copy(center.clone().add(new THREE.Vector3(distance * 0.8, distance * 0.45, distance)));
-    this.camera.near = Math.max(0.1, distance / 200);
-    this.camera.far = Math.max(400, distance * 8 + maxSize * 2);
-    this.camera.updateProjectionMatrix();
     this.controls.target.copy(center);
+    this.syncCameraClipping({ force: true, maxObjectSize: maxSize });
     this.controls.update();
+  }
+
+  syncCameraClipping({ force = false, maxObjectSize = 0 } = {}) {
+    const distance = this.camera.position.distanceTo(this.controls.target);
+    const safeDistance = Number.isFinite(distance) ? Math.max(distance, 1) : 1;
+
+    const desiredNear = THREE.MathUtils.clamp(safeDistance / 4500, PREVIEW_MIN_NEAR, 4);
+    const desiredFar = THREE.MathUtils.clamp(
+      Math.max(PREVIEW_MIN_FAR, safeDistance * 32 + maxObjectSize * 6),
+      PREVIEW_MIN_FAR,
+      PREVIEW_MAX_FAR
+    );
+
+    const nearEpsilon = Math.max(0.005, this.camera.near * 0.08);
+    const farEpsilon = Math.max(10, this.camera.far * 0.015);
+
+    if (
+      force ||
+      Math.abs(this.camera.near - desiredNear) > nearEpsilon ||
+      Math.abs(this.camera.far - desiredFar) > farEpsilon
+    ) {
+      this.camera.near = desiredNear;
+      this.camera.far = desiredFar;
+      this.camera.updateProjectionMatrix();
+    }
   }
 
   animate() {
     this.controls.update();
+    this.syncCameraClipping();
     this.render();
     this.animationFrame = requestAnimationFrame(this.animate);
   }

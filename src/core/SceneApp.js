@@ -1,6 +1,12 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 
+const DEFAULT_CAMERA_NEAR = 0.05;
+const DEFAULT_CAMERA_FAR = 60000;
+const MAX_CAMERA_FAR = 500000;
+const MIN_CAMERA_FAR = 30000;
+const MAX_ORBIT_DISTANCE = 120000;
+
 /**
  * Small app shell that owns renderer, scene, camera, controls and resize loop.
  */
@@ -31,12 +37,19 @@ export class SceneApp {
     this.scene = new THREE.Scene();
     this.scene.background = null;
 
-    this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.2, 15000);
+    this.camera = new THREE.PerspectiveCamera(
+      45,
+      window.innerWidth / window.innerHeight,
+      DEFAULT_CAMERA_NEAR,
+      DEFAULT_CAMERA_FAR
+    );
     this.camera.position.copy(cameraPosition);
 
     this.controls = new OrbitControls(this.camera, this.renderer.domElement);
     this.controls.enableDamping = true;
-    this.controls.maxDistance = 14000;
+    this.controls.zoomSpeed = 0.75;
+    this.controls.maxDistance = MAX_ORBIT_DISTANCE;
+    this.syncCameraClipping({ force: true });
 
     this.addDefaultLights();
     this.setBackground(background, false);
@@ -62,6 +75,7 @@ export class SceneApp {
   start() {
     const animate = () => {
       this.controls.update();
+      this.syncCameraClipping();
       this.renderer.render(this.scene, this.camera);
       requestAnimationFrame(animate);
     };
@@ -77,7 +91,33 @@ export class SceneApp {
 
   renderFrame() {
     this.controls.update();
+    this.syncCameraClipping();
     this.renderer.render(this.scene, this.camera);
+  }
+
+  syncCameraClipping({ force = false, maxObjectSize = 0 } = {}) {
+    const distance = this.camera.position.distanceTo(this.controls.target);
+    const safeDistance = Number.isFinite(distance) ? Math.max(distance, 1) : 1;
+
+    const desiredNear = THREE.MathUtils.clamp(safeDistance / 5000, DEFAULT_CAMERA_NEAR, 8);
+    const desiredFar = THREE.MathUtils.clamp(
+      Math.max(DEFAULT_CAMERA_FAR, MIN_CAMERA_FAR, safeDistance * 40 + maxObjectSize * 8),
+      MIN_CAMERA_FAR,
+      MAX_CAMERA_FAR
+    );
+
+    const nearEpsilon = Math.max(0.005, this.camera.near * 0.08);
+    const farEpsilon = Math.max(30, this.camera.far * 0.015);
+
+    if (
+      force ||
+      Math.abs(this.camera.near - desiredNear) > nearEpsilon ||
+      Math.abs(this.camera.far - desiredFar) > farEpsilon
+    ) {
+      this.camera.near = desiredNear;
+      this.camera.far = desiredFar;
+      this.camera.updateProjectionMatrix();
+    }
   }
 
   setBackground(background, render = true) {
@@ -116,9 +156,7 @@ export class SceneApp {
 
     this.controls.target.copy(center);
     this.camera.position.copy(center.clone().add(direction.multiplyScalar(distance)));
-    this.camera.near = Math.max(0.1, distance / 200);
-    this.camera.far = Math.max(2000, distance * 8 + maxSize * 2);
-    this.camera.updateProjectionMatrix();
+    this.syncCameraClipping({ force: true, maxObjectSize: maxSize });
     this.controls.update();
     this.renderFrame();
   }
