@@ -5,9 +5,13 @@ Interactive Three.js editor for composing neural-network style diagrams from reu
 ## What You Can Do
 
 - Create and style core elements:
-  - `Tensor` volumes (shape, voxel geometry, color gradient, opacity, border)
+  - `Tensor` volumes (height/width/channels, tensor scale, translucent cube styling)
   - `Arrow` connectors (`3d`, `2d`, `dotted`, `curved`)
   - `Label` nodes (text, font, size, text/background/border styling)
+- Model convolution relations directly on tensors:
+  - Output tensor references its `parentTensorId`
+  - Parent kernel (`channels x k x k`) renders inside the parent tensor
+  - Pyramid/frustum projection renders from kernel to the facing plane of the output tensor
 - Move and rotate any selected element in canvas.
 - Re-open and edit any element by clicking it.
 - Duplicate selected elements.
@@ -21,6 +25,7 @@ Interactive Three.js editor for composing neural-network style diagrams from reu
 - `src/editor/ArchitectureEditor.js`: selection, transforms, lifecycle, import/export
 - `src/editor/schema.js`: JSON schema defaults + normalization
 - `src/editor/elements/*`: OOP element implementations (`BaseElement`, `TensorElement`, `ArrowElement`, `LabelElement`)
+- `src/editor/TensorRelationOverlay.js`: parent tensor/kernel/pyramid relation renderer
 - `src/editor/ElementPreview.js`: right-panel preview renderer
 - `src/config/default-architecture.json`: default loaded architecture document
 - `docs/EDITOR_REFACTOR_PLAN.md`: refactor design and OO plan

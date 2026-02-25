@@ -8,7 +8,8 @@ Core modules:
 - `src/editor/ArchitectureEditor.js`: scene element orchestration, selection, transform controls, import/export.
 - `src/editor/schema.js`: normalized document schema and defaults.
 - `src/editor/elements/BaseElement.js`: common element lifecycle contract.
-- `src/editor/elements/TensorElement.js`: voxel tensor element built on `TensorVolume`.
+- `src/editor/elements/TensorElement.js`: tensor cuboid element built on `TensorVolume`.
+- `src/editor/TensorRelationOverlay.js`: renders parent-kernel-pyramid convolution relations between tensors.
 - `src/editor/elements/ArrowElement.js`: 3D/2D/dotted/curved arrows.
 - `src/editor/elements/LabelElement.js`: configurable sprite labels.
 - `src/editor/ElementPreview.js`: inspector-side preview renderer.
@@ -31,12 +32,17 @@ Core modules:
   - `name`
   - `transform` (`position`, `rotation`)
   - `data` (type-specific payload)
+- Tensor data uses a shape-first model:
+  - `dimensions`: `{ height, width, channels }`
+  - `scale`: per-axis world units (`height`, `width`, `channel`)
+  - `convolution`: relation metadata (`parentTensorId`, kernel tensor, pyramid settings)
 - `schema.js` normalizes imports, clamps invalid values, and injects defaults.
 
 ## Interaction Model
 - Raycast click selection resolves owning element IDs from scene nodes.
 - `TransformControls` provides translate/rotate manipulation of selected elements.
 - Curved arrows expose an optional in-canvas control handle for control-point editing.
+- Convolution overlays are non-selectable scene decorations derived from tensor relations.
 
 ## Extendability
 - Add a new element type by:

@@ -103,6 +103,8 @@ const uiState = {
   selectedElement: null,
   holdCreateModeOnNextSelection: false,
   curveHandleEnabled: false,
+  kernelHandleEnabled: false,
+  kernelHandleTargetSourceId: null,
   latestDocument: clone(startingDocument),
   exportResolution: initialExportResolution
 };
@@ -152,9 +154,62 @@ function syncViewPlaneControls(editor) {
 
 function disableCurveHandleEditing(editor) {
   uiState.curveHandleEnabled = false;
+  uiState.kernelHandleEnabled = false;
+  uiState.kernelHandleTargetSourceId = null;
   editor.setCurveHandleEnabled(false);
+  editor.setKernelHandleEnabled(false);
+  editor.setKernelHandleTargetSourceId(null);
   if (curveHandleStatus) {
-    curveHandleStatus.textContent = "Curve handle: Off";
+    curveHandleStatus.textContent = "Direct handle: Off";
+  }
+}
+
+function syncKernelHandleTargetSelection(editor, tensorId) {
+  const options = editor.getKernelPlacementOptions(tensorId);
+  const optionIds = new Set(options.map((option) => option.value));
+  let targetSourceId = uiState.kernelHandleTargetSourceId;
+
+  if (!targetSourceId || !optionIds.has(targetSourceId)) {
+    targetSourceId = options.length === 1 ? options[0].value : null;
+  }
+
+  uiState.kernelHandleTargetSourceId = targetSourceId;
+  editor.setKernelHandleTargetSourceId(targetSourceId);
+
+  return {
+    options,
+    targetSourceId
+  };
+}
+
+function syncDirectHandleStatus(editor) {
+  if (!curveHandleStatus) {
+    return;
+  }
+
+  const isEdit = uiState.inspectorMode === "edit";
+  const isArrow = isEdit && uiState.draftElement.type === ELEMENT_TYPES.arrow;
+  const isTensor = isEdit && uiState.draftElement.type === ELEMENT_TYPES.tensor;
+  const kernelPlacement = isTensor
+    ? syncKernelHandleTargetSelection(editor, uiState.draftElement.id)
+    : { options: [], targetSourceId: null };
+  const canMoveKernel = isTensor && kernelPlacement.options.length > 0;
+
+  curveHandleStatus.hidden = !(isArrow || canMoveKernel);
+
+  if (isArrow) {
+    curveHandleStatus.textContent = uiState.curveHandleEnabled ? "Curve handle: On" : "Curve handle: Off";
+    return;
+  }
+
+  if (canMoveKernel) {
+    const selectedKernelOption = kernelPlacement.options.find(
+      (option) => option.value === kernelPlacement.targetSourceId
+    );
+    const selectedKernelSuffix = selectedKernelOption ? ` (${selectedKernelOption.label})` : "";
+    curveHandleStatus.textContent = uiState.kernelHandleEnabled
+      ? `Kernel handle: On${selectedKernelSuffix}`
+      : `Kernel handle: Off${selectedKernelSuffix}`;
   }
 }
 
@@ -174,10 +229,15 @@ function openCreateInspector(type, editor) {
   showRightPanel();
 }
 
-function openEditInspector(elementConfig, editor) {
-  disableCurveHandleEditing(editor);
+function openEditInspector(elementConfig, editor, { preserveHandles = false } = {}) {
+  if (!preserveHandles) {
+    disableCurveHandleEditing(editor);
+  }
   uiState.inspectorMode = "edit";
   setDraftElement(clone(elementConfig));
+  if (elementConfig?.type === ELEMENT_TYPES.tensor) {
+    syncKernelHandleTargetSelection(editor, elementConfig.id);
+  }
   renderInspector(editor);
   showRightPanel();
 }
@@ -202,6 +262,18 @@ function addTextField(container, { label, value, onInput, placeholder = "" }) {
   input.value = value;
   input.placeholder = placeholder;
   input.addEventListener("input", () => onInput(input.value));
+  row.appendChild(input);
+  container.appendChild(row);
+  return input;
+}
+
+function addReadOnlyField(container, { label, value }) {
+  const row = createFieldRow(label);
+  const input = document.createElement("input");
+  input.className = "field-input";
+  input.type = "text";
+  input.value = value;
+  input.readOnly = true;
   row.appendChild(input);
   container.appendChild(row);
   return input;
@@ -260,6 +332,18 @@ function addSelectField(container, { label, value, options, onInput }) {
   return input;
 }
 
+function addToggleField(container, { label, value, onInput }) {
+  const row = createFieldRow(label);
+  row.classList.add("toggle-row");
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.checked = Boolean(value);
+  input.addEventListener("change", () => onInput(input.checked));
+  row.appendChild(input);
+  container.appendChild(row);
+  return input;
+}
+
 function addRangeField(container, { label, value, min, max, step, suffix = "", onInput }) {
   const row = createFieldRow(label);
   row.classList.add("range-row");
@@ -304,89 +388,110 @@ function syncDraftAndPreview(editor, { applyLiveForEdit = true } = {}) {
   }
 }
 
+function getTensorReferenceOptions({ excludeId = null } = {}) {
+  const elements = uiState.latestDocument?.elements ?? [];
+  const options = [{ value: "", label: "(None)" }];
+
+  for (const element of elements) {
+    if (element.type !== ELEMENT_TYPES.tensor) {
+      continue;
+    }
+    if (excludeId && element.id === excludeId) {
+      continue;
+    }
+    options.push({
+      value: element.id,
+      label: `${element.name} (${element.id})`
+    });
+  }
+
+  return options;
+}
+
+function withCurrentValueOption(options, value, fallbackLabel = "Custom") {
+  if (!value || options.some((option) => option.value === value)) {
+    return options;
+  }
+  return [...options, { value, label: `${fallbackLabel} (${value})` }];
+}
+
 function renderTensorInspector(editor) {
   const tensor = uiState.draftElement.data;
+  const currentTensorId = uiState.draftElement.id;
 
   addSectionTitle(inspectorFields, "Structure");
+  addReadOnlyField(inspectorFields, {
+    label: "Tensor Id",
+    value: currentTensorId
+  });
   addNumberField(inspectorFields, {
-    label: "Channels",
-    value: tensor.shape[0],
+    label: "Channels (X)",
+    value: tensor.dimensions.channels,
     min: 1,
     max: 512,
     step: 1,
     integer: true,
     onInput: (value) => {
-      uiState.draftElement.data.shape[0] = value;
+      uiState.draftElement.data.dimensions.channels = value;
       syncDraftAndPreview(editor);
     }
   });
   addNumberField(inspectorFields, {
-    label: "Height",
-    value: tensor.shape[1],
+    label: "Height (Y)",
+    value: tensor.dimensions.height,
     min: 1,
     max: 512,
     step: 1,
     integer: true,
     onInput: (value) => {
-      uiState.draftElement.data.shape[1] = value;
+      uiState.draftElement.data.dimensions.height = value;
       syncDraftAndPreview(editor);
     }
   });
   addNumberField(inspectorFields, {
-    label: "Width",
-    value: tensor.shape[2],
+    label: "Width (Z)",
+    value: tensor.dimensions.width,
     min: 1,
     max: 512,
     step: 1,
     integer: true,
     onInput: (value) => {
-      uiState.draftElement.data.shape[2] = value;
+      uiState.draftElement.data.dimensions.width = value;
       syncDraftAndPreview(editor);
     }
   });
 
-  addSectionTitle(inspectorFields, "Voxel Geometry");
+  addSectionTitle(inspectorFields, "Tensor Scale");
   addNumberField(inspectorFields, {
-    label: "Pixel Size",
-    value: tensor.voxel.pixelSize,
-    min: 0.2,
-    max: 20,
-    step: 0.1,
-    onInput: (value) => {
-      uiState.draftElement.data.voxel.pixelSize = value;
-      syncDraftAndPreview(editor);
-    }
-  });
-  addNumberField(inspectorFields, {
-    label: "Pixel Depth",
-    value: tensor.voxel.pixelDepth,
+    label: "Height Unit",
+    value: tensor.scale.height,
     min: 0.1,
-    max: 20,
+    max: 80,
     step: 0.1,
     onInput: (value) => {
-      uiState.draftElement.data.voxel.pixelDepth = value;
+      uiState.draftElement.data.scale.height = value;
       syncDraftAndPreview(editor);
     }
   });
   addNumberField(inspectorFields, {
-    label: "XY Gap",
-    value: tensor.voxel.gap,
-    min: 0,
-    max: 12,
-    step: 0.05,
+    label: "Width Unit",
+    value: tensor.scale.width,
+    min: 0.1,
+    max: 80,
+    step: 0.1,
     onInput: (value) => {
-      uiState.draftElement.data.voxel.gap = value;
+      uiState.draftElement.data.scale.width = value;
       syncDraftAndPreview(editor);
     }
   });
   addNumberField(inspectorFields, {
-    label: "Layer Gap",
-    value: tensor.voxel.layerGap,
-    min: 0,
-    max: 12,
-    step: 0.05,
+    label: "Channel Unit",
+    value: tensor.scale.channel,
+    min: 0.1,
+    max: 80,
+    step: 0.1,
     onInput: (value) => {
-      uiState.draftElement.data.voxel.layerGap = value;
+      uiState.draftElement.data.scale.channel = value;
       syncDraftAndPreview(editor);
     }
   });
@@ -435,6 +540,365 @@ function renderTensorInspector(editor) {
     step: 0.01,
     onInput: (value) => {
       uiState.draftElement.data.style.borderOpacity = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+
+  addSectionTitle(inspectorFields, "Shape Labels");
+  addToggleField(inspectorFields, {
+    label: "Show Labels",
+    value: tensor.labels.enabled,
+    onInput: (value) => {
+      uiState.draftElement.data.labels.enabled = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addColorField(inspectorFields, {
+    label: "Label Text",
+    value: tensor.labels.textColor,
+    onInput: (value) => {
+      uiState.draftElement.data.labels.textColor = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addRangeField(inspectorFields, {
+    label: "Label Opacity",
+    value: tensor.labels.textOpacity,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    onInput: (value) => {
+      uiState.draftElement.data.labels.textOpacity = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addColorField(inspectorFields, {
+    label: "Label BG",
+    value: tensor.labels.backgroundColor,
+    onInput: (value) => {
+      uiState.draftElement.data.labels.backgroundColor = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addRangeField(inspectorFields, {
+    label: "Label BG Opacity",
+    value: tensor.labels.backgroundOpacity,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    onInput: (value) => {
+      uiState.draftElement.data.labels.backgroundOpacity = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addColorField(inspectorFields, {
+    label: "Label Border",
+    value: tensor.labels.borderColor,
+    onInput: (value) => {
+      uiState.draftElement.data.labels.borderColor = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addRangeField(inspectorFields, {
+    label: "Label Border Opacity",
+    value: tensor.labels.borderOpacity,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    onInput: (value) => {
+      uiState.draftElement.data.labels.borderOpacity = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addNumberField(inspectorFields, {
+    label: "Label Scale",
+    value: tensor.labels.scaleHeight,
+    min: 0.4,
+    max: 30,
+    step: 0.1,
+    onInput: (value) => {
+      uiState.draftElement.data.labels.scaleHeight = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+
+  addSectionTitle(inspectorFields, "Tensor References");
+  const parentOptions = withCurrentValueOption(
+    getTensorReferenceOptions({ excludeId: currentTensorId }),
+    tensor.convolution.parentTensorId,
+    "Parent"
+  );
+  addSelectField(inspectorFields, {
+    label: "Parent Tensor",
+    value: tensor.convolution.parentTensorId,
+    options: parentOptions,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.parentTensorId = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  const targetOptions = withCurrentValueOption(
+    getTensorReferenceOptions(),
+    tensor.convolution.targetTensorId,
+    "Target"
+  );
+  addSelectField(inspectorFields, {
+    label: "Pyramid Target",
+    value: tensor.convolution.targetTensorId,
+    options: targetOptions,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.targetTensorId = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addTextField(inspectorFields, {
+    label: "Parent Id (manual)",
+    value: tensor.convolution.parentTensorId,
+    placeholder: "tensor-id",
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.parentTensorId = value.trim();
+      syncDraftAndPreview(editor);
+    }
+  });
+  addTextField(inspectorFields, {
+    label: "Target Id (manual)",
+    value: tensor.convolution.targetTensorId,
+    placeholder: "tensor-id",
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.targetTensorId = value.trim();
+      syncDraftAndPreview(editor);
+    }
+  });
+  addNumberField(inspectorFields, {
+    label: "Branch Order",
+    value: tensor.convolution.branchOrder,
+    min: 0,
+    max: 24,
+    step: 1,
+    integer: true,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.branchOrder = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addNumberField(inspectorFields, {
+    label: "Branch Spacing",
+    value: tensor.convolution.layout.branchSpacing,
+    min: 0,
+    max: 4,
+    step: 0.05,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.layout.branchSpacing = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addNumberField(inspectorFields, {
+    label: "Branch Offset X",
+    value: tensor.convolution.layout.branchOffset[0],
+    min: -500,
+    max: 500,
+    step: 0.25,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.layout.branchOffset[0] = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addNumberField(inspectorFields, {
+    label: "Branch Offset Y",
+    value: tensor.convolution.layout.branchOffset[1],
+    min: -500,
+    max: 500,
+    step: 0.25,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.layout.branchOffset[1] = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addNumberField(inspectorFields, {
+    label: "Branch Offset Z",
+    value: tensor.convolution.layout.branchOffset[2],
+    min: -500,
+    max: 500,
+    step: 0.25,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.layout.branchOffset[2] = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+
+  addSectionTitle(inspectorFields, "Parent Kernel");
+  addNumberField(inspectorFields, {
+    label: "Kernel Height",
+    value: tensor.convolution.kernel.height,
+    min: 1,
+    max: 512,
+    step: 1,
+    integer: true,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.kernel.height = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addNumberField(inspectorFields, {
+    label: "Kernel Width",
+    value: tensor.convolution.kernel.width,
+    min: 1,
+    max: 512,
+    step: 1,
+    integer: true,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.kernel.width = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addNumberField(inspectorFields, {
+    label: "Kernel Channels",
+    value: tensor.convolution.kernel.channels ?? 0,
+    min: 0,
+    max: 4096,
+    step: 1,
+    integer: true,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.kernel.channels = value <= 0 ? null : value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  if (uiState.inspectorMode === "edit") {
+    const kernelPlacement = syncKernelHandleTargetSelection(editor, currentTensorId);
+    if (kernelPlacement.options.length > 1) {
+      addSelectField(inspectorFields, {
+        label: "Kernel To Move",
+        value: kernelPlacement.targetSourceId ?? "",
+        options: [
+          { value: "", label: "(Select kernel)" },
+          ...kernelPlacement.options.map((option) => ({
+            value: option.value,
+            label: option.label
+          }))
+        ],
+        onInput: (value) => {
+          uiState.kernelHandleTargetSourceId = value || null;
+          editor.setKernelHandleTargetSourceId(uiState.kernelHandleTargetSourceId);
+          if (!uiState.kernelHandleTargetSourceId && uiState.kernelHandleEnabled) {
+            uiState.kernelHandleEnabled = false;
+            editor.setKernelHandleEnabled(false);
+          }
+          renderInspector(editor);
+        }
+      });
+    }
+
+    const kernelMoveRow = createFieldRow("Canvas Kernel Move");
+    const kernelMoveButton = createButton(
+      uiState.kernelHandleEnabled ? "Disable Handle" : "Enable Handle",
+      { className: "field-action" }
+    );
+    const canMoveKernel = Boolean(
+      kernelPlacement.options.length > 0 && uiState.kernelHandleTargetSourceId
+    );
+    kernelMoveButton.disabled = !canMoveKernel;
+    kernelMoveButton.addEventListener("click", () => {
+      const nextEnabled = !uiState.kernelHandleEnabled;
+      if (nextEnabled && !uiState.kernelHandleTargetSourceId) {
+        return;
+      }
+      uiState.kernelHandleEnabled = nextEnabled;
+      uiState.curveHandleEnabled = false;
+      editor.setCurveHandleEnabled(false);
+      editor.setKernelHandleTargetSourceId(uiState.kernelHandleTargetSourceId);
+      editor.setKernelHandleEnabled(nextEnabled);
+      syncDirectHandleStatus(editor);
+      kernelMoveButton.textContent = nextEnabled ? "Disable Handle" : "Enable Handle";
+    });
+    kernelMoveRow.appendChild(kernelMoveButton);
+    inspectorFields.appendChild(kernelMoveRow);
+  }
+  addColorField(inspectorFields, {
+    label: "Kernel Color",
+    value: tensor.convolution.kernel.color,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.kernel.color = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addRangeField(inspectorFields, {
+    label: "Kernel Opacity",
+    value: tensor.convolution.kernel.opacity,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.kernel.opacity = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addColorField(inspectorFields, {
+    label: "Kernel Border",
+    value: tensor.convolution.kernel.borderColor,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.kernel.borderColor = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addRangeField(inspectorFields, {
+    label: "Kernel Border Opacity",
+    value: tensor.convolution.kernel.borderOpacity,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.kernel.borderOpacity = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addNumberField(inspectorFields, {
+    label: "Kernel Label Scale",
+    value: tensor.convolution.kernel.labelScaleHeight,
+    min: 0.3,
+    max: 40,
+    step: 0.1,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.kernel.labelScaleHeight = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+
+  addSectionTitle(inspectorFields, "Convolution Pyramid");
+  addColorField(inspectorFields, {
+    label: "Pyramid Color",
+    value: tensor.convolution.pyramid.color,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.pyramid.color = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addRangeField(inspectorFields, {
+    label: "Pyramid Opacity",
+    value: tensor.convolution.pyramid.opacity,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.pyramid.opacity = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addColorField(inspectorFields, {
+    label: "Pyramid Border",
+    value: tensor.convolution.pyramid.borderColor,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.pyramid.borderColor = value;
+      syncDraftAndPreview(editor);
+    }
+  });
+  addRangeField(inspectorFields, {
+    label: "Pyramid Border Opacity",
+    value: tensor.convolution.pyramid.borderOpacity,
+    min: 0,
+    max: 1,
+    step: 0.01,
+    onInput: (value) => {
+      uiState.draftElement.data.convolution.pyramid.borderOpacity = value;
       syncDraftAndPreview(editor);
     }
   });
@@ -577,6 +1041,8 @@ function renderArrowInspector(editor) {
       const button = createButton("Toggle Handle", { className: "field-action" });
       button.addEventListener("click", () => {
         uiState.curveHandleEnabled = !uiState.curveHandleEnabled;
+        uiState.kernelHandleEnabled = false;
+        editor.setKernelHandleEnabled(false);
         editor.setCurveHandleEnabled(uiState.curveHandleEnabled);
         curveHandleStatus.textContent = uiState.curveHandleEnabled
           ? "Curve handle: On"
@@ -862,9 +1328,7 @@ function renderInspector(editor) {
     renderLabelInspector(editor);
   }
 
-  curveHandleStatus.hidden = !(
-    uiState.inspectorMode === "edit" && uiState.draftElement.type === ELEMENT_TYPES.arrow
-  );
+  syncDirectHandleStatus(editor);
 
   inspectorActionButton.textContent = isCreate ? "Add To Canvas" : "Apply Changes";
   inspectorActionButton.classList.toggle("create-action", isCreate);
@@ -888,6 +1352,7 @@ let editor = null;
 editor = new ArchitectureEditor({
   app,
   onSelectionChange: (selectedElement) => {
+    const previousSelectedId = uiState.selectedElement?.id ?? null;
     uiState.selectedElement = selectedElement;
     if (duplicateButton) {
       duplicateButton.disabled = !selectedElement;
@@ -899,7 +1364,9 @@ editor = new ArchitectureEditor({
     }
 
     if (selectedElement && preview && inspectorFields && editor) {
-      openEditInspector(selectedElement, editor);
+      openEditInspector(selectedElement, editor, {
+        preserveHandles: previousSelectedId === selectedElement.id
+      });
     }
   },
   onDocumentChange: (documentConfig) => {

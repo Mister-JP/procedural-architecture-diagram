@@ -7,6 +7,7 @@ import {
   normalizeDocument
 } from "./schema.js";
 import { createElementInstance } from "./elements/ElementFactory.js";
+import { TensorRelationOverlay } from "./TensorRelationOverlay.js";
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -110,6 +111,8 @@ export class ArchitectureEditor {
     this.selectedIds = new Set();
     this.transformMode = "translate";
     this.curveHandleEnabled = false;
+    this.kernelHandleEnabled = false;
+    this.kernelHandleTargetSourceId = null;
     this.isDraggingTransform = false;
     this.lastRotateAxisPointerDown = { axis: null, at: 0 };
     this.dragSession = null;
@@ -122,6 +125,8 @@ export class ArchitectureEditor {
 
     this.rootGroup = new THREE.Group();
     this.app.add(this.rootGroup);
+    this.tensorRelationOverlay = new TensorRelationOverlay();
+    this.app.add(this.tensorRelationOverlay.group);
     this.alignmentGuidesGroup = new THREE.Group();
     this.alignmentGuidesGroup.visible = false;
     this.app.add(this.alignmentGuidesGroup);
@@ -131,6 +136,7 @@ export class ArchitectureEditor {
 
     this.selectionHelpers = [];
     this.createCurveHandle();
+    this.createKernelHandle();
     this.setupTransformControls();
     this.setupSelectionEvents();
 
@@ -151,6 +157,21 @@ export class ArchitectureEditor {
     this.curveHandle.visible = false;
     this.curveHandle.userData.isCurveHandle = true;
     this.app.add(this.curveHandle);
+  }
+
+  createKernelHandle() {
+    this.kernelHandle = new THREE.Mesh(
+      new THREE.BoxGeometry(2.2, 2.2, 2.2),
+      new THREE.MeshBasicMaterial({
+        color: 0x38bdf8,
+        transparent: true,
+        opacity: 0.9,
+        depthTest: false
+      })
+    );
+    this.kernelHandle.visible = false;
+    this.kernelHandle.userData.isKernelHandle = true;
+    this.app.add(this.kernelHandle);
   }
 
   setupTransformControls() {
@@ -192,7 +213,10 @@ export class ArchitectureEditor {
     this.app.scene.remove(this.transformControlsHelper);
     this.transformControls.dispose();
     this.app.scene.remove(this.curveHandle);
+    this.app.scene.remove(this.kernelHandle);
     this.app.scene.remove(this.alignmentGuidesGroup);
+    this.tensorRelationOverlay.dispose();
+    this.app.scene.remove(this.tensorRelationOverlay.group);
   }
 
   onPointerDown(event) {
@@ -211,7 +235,10 @@ export class ArchitectureEditor {
     this.pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
     this.raycaster.setFromCamera(this.pointer, this.app.camera);
-    const intersections = this.raycaster.intersectObjects(this.rootGroup.children, true);
+    const intersections = this.raycaster.intersectObjects(
+      [...this.rootGroup.children, this.tensorRelationOverlay.group],
+      true
+    );
     const shouldToggleSelection = event.shiftKey;
 
     if (intersections.length === 0) {
@@ -288,6 +315,7 @@ export class ArchitectureEditor {
       this.selectElement(null, { emitSelection: true });
     }
 
+    this.refreshTensorRelationOverlay();
     this.app.renderFrame();
 
     if (emitDocumentChange) {
@@ -305,9 +333,12 @@ export class ArchitectureEditor {
 
     this.transformControls.detach();
     this.curveHandle.visible = false;
+    this.kernelHandle.visible = false;
+    this.kernelHandleTargetSourceId = null;
     this.selectedId = null;
     this.selectedIds.clear();
     this.clearAlignmentGuides();
+    this.refreshTensorRelationOverlay();
   }
 
   clearUndoHistory() {
@@ -570,6 +601,7 @@ export class ArchitectureEditor {
     if (selectedIds.length === 0) {
       this.transformControls.detach();
       this.curveHandle.visible = false;
+      this.kernelHandle.visible = false;
       return;
     }
 
@@ -589,15 +621,21 @@ export class ArchitectureEditor {
     if (!selected) {
       this.transformControls.detach();
       this.curveHandle.visible = false;
+      this.kernelHandle.visible = false;
       return;
     }
 
     const isSingleSelection = selectedIds.length === 1;
-    if (isSingleSelection && this.curveHandleEnabled && selected.isCurved && selected.isCurved()) {
+    if (isSingleSelection && this.kernelHandleEnabled && this.attachKernelHandle(selected)) {
+      this.detachCurveHandle();
+    } else if (isSingleSelection && this.curveHandleEnabled && selected.isCurved && selected.isCurved()) {
+      this.detachKernelHandle();
       this.attachCurveHandle(selected);
     } else {
       this.detachCurveHandle();
+      this.detachKernelHandle();
       this.transformControls.attach(selected.group);
+      this.transformControls.setSpace("world");
       this.transformControls.setMode(this.transformMode);
       this.updateTransformAxisVisibility();
     }
@@ -613,6 +651,7 @@ export class ArchitectureEditor {
     this.curveHandle.visible = true;
     this.curveHandle.position.copy(worldControlPoint);
     this.transformControls.attach(this.curveHandle);
+    this.transformControls.setSpace("world");
     this.transformControls.setMode("translate");
     this.updateTransformAxisVisibility();
   }
@@ -621,9 +660,173 @@ export class ArchitectureEditor {
     this.curveHandle.visible = false;
   }
 
+  buildKernelPlacementOption(metadata) {
+    const sourceElement = this.elements.get(metadata.sourceId);
+    if (!sourceElement) {
+      return null;
+    }
+
+    const outputElement = this.elements.get(metadata.outputId);
+    const sourceName = sourceElement.config?.name || metadata.sourceId;
+    const outputName = outputElement?.config?.name || metadata.outputId;
+    const branchOrder = sourceElement.config?.data?.convolution?.branchOrder ?? 0;
+    const outputSuffix =
+      metadata.outputId && metadata.outputId !== metadata.sourceId ? ` -> ${outputName}` : "";
+
+    return {
+      value: metadata.sourceId,
+      label: `${sourceName}${outputSuffix} (${metadata.sourceId})`,
+      sourceId: metadata.sourceId,
+      parentId: metadata.parentId,
+      outputId: metadata.outputId,
+      branchOrder
+    };
+  }
+
+  getKernelPlacementOptions(elementId = this.selectedId) {
+    if (!elementId || !this.elements.has(elementId)) {
+      return [];
+    }
+
+    const element = this.elements.get(elementId);
+    if (!element || element.type !== "tensor") {
+      return [];
+    }
+
+    const optionBySourceId = new Map();
+    const directMetadata = this.tensorRelationOverlay.getKernelRelationMetadata(elementId);
+    if (directMetadata) {
+      const option = this.buildKernelPlacementOption(directMetadata);
+      if (option) {
+        optionBySourceId.set(option.sourceId, option);
+      }
+    }
+
+    const childMetadata = this.tensorRelationOverlay.getKernelRelationMetadataByParent(elementId);
+    for (const metadata of childMetadata) {
+      const option = this.buildKernelPlacementOption(metadata);
+      if (option) {
+        optionBySourceId.set(option.sourceId, option);
+      }
+    }
+
+    return Array.from(optionBySourceId.values()).sort((left, right) => {
+      if (left.branchOrder !== right.branchOrder) {
+        return left.branchOrder - right.branchOrder;
+      }
+      return left.label.localeCompare(right.label);
+    });
+  }
+
+  setKernelHandleTargetSourceId(sourceId) {
+    const nextSourceId =
+      typeof sourceId === "string" && sourceId.trim().length > 0 ? sourceId.trim() : null;
+    if (nextSourceId === this.kernelHandleTargetSourceId) {
+      return;
+    }
+
+    this.kernelHandleTargetSourceId = nextSourceId;
+    if (this.kernelHandleEnabled) {
+      this.refreshSelectionVisualization();
+    }
+  }
+
+  getKernelHandleTargetSourceId() {
+    return this.kernelHandleTargetSourceId;
+  }
+
+  resolveKernelHandleSourceId(tensorElement) {
+    if (!tensorElement || tensorElement.type !== "tensor") {
+      return null;
+    }
+
+    const selectedId = tensorElement.id;
+    if (typeof this.kernelHandleTargetSourceId === "string" && this.kernelHandleTargetSourceId.length > 0) {
+      const targetedMetadata = this.tensorRelationOverlay.getKernelRelationMetadata(this.kernelHandleTargetSourceId);
+      if (
+        targetedMetadata &&
+        (targetedMetadata.sourceId === selectedId ||
+          targetedMetadata.parentId === selectedId ||
+          targetedMetadata.outputId === selectedId)
+      ) {
+        return targetedMetadata.sourceId;
+      }
+    }
+
+    const directMetadata = this.tensorRelationOverlay.getKernelRelationMetadata(selectedId);
+    if (directMetadata) {
+      return directMetadata.sourceId;
+    }
+
+    const options = this.getKernelPlacementOptions(selectedId);
+    if (options.length === 1) {
+      return options[0].sourceId;
+    }
+
+    return null;
+  }
+
+  syncKernelHandlePlacement(tensorElement) {
+    const sourceId = this.resolveKernelHandleSourceId(tensorElement);
+    if (!sourceId) {
+      return false;
+    }
+
+    const metadata = this.tensorRelationOverlay.getKernelRelationMetadata(sourceId);
+    if (!metadata) {
+      return false;
+    }
+
+    const parentElement = this.elements.get(metadata.parentId);
+    if (!parentElement) {
+      return false;
+    }
+
+    const kernelWorld = parentElement.group.localToWorld(metadata.kernelCenterLocal.clone());
+    const parentQuaternion = parentElement.group.getWorldQuaternion(new THREE.Quaternion());
+    this.kernelHandle.position.copy(kernelWorld);
+    this.kernelHandle.quaternion.copy(parentQuaternion);
+    this.kernelHandle.userData.kernelSourceId = sourceId;
+    this.kernelHandleTargetSourceId = sourceId;
+    return true;
+  }
+
+  attachKernelHandle(tensorElement) {
+    if (!this.syncKernelHandlePlacement(tensorElement)) {
+      return false;
+    }
+
+    this.kernelHandle.visible = true;
+    this.transformControls.attach(this.kernelHandle);
+    this.transformControls.setSpace("local");
+    this.transformControls.setMode("translate");
+    this.updateTransformAxisVisibility();
+    return true;
+  }
+
+  detachKernelHandle() {
+    this.kernelHandle.visible = false;
+    delete this.kernelHandle.userData.kernelSourceId;
+  }
+
   setCurveHandleEnabled(enabled) {
     this.curveHandleEnabled = enabled;
+    if (enabled) {
+      this.kernelHandleEnabled = false;
+    }
     this.refreshSelectionVisualization();
+  }
+
+  setKernelHandleEnabled(enabled) {
+    this.kernelHandleEnabled = enabled;
+    if (enabled) {
+      this.curveHandleEnabled = false;
+    }
+    this.refreshSelectionVisualization();
+  }
+
+  canEditKernelPlacement(elementId = this.selectedId) {
+    return this.getKernelPlacementOptions(elementId).length > 0;
   }
 
   setTransformMode(mode) {
@@ -816,6 +1019,13 @@ export class ArchitectureEditor {
   }
 
   updateTransformAxisVisibility() {
+    if (this.transformControls.object === this.kernelHandle && this.kernelHandleEnabled) {
+      this.transformControls.showX = false;
+      this.transformControls.showY = true;
+      this.transformControls.showZ = true;
+      return;
+    }
+
     const lockedAxis = this.getLockedAxisForPlane();
     this.transformControls.showX = lockedAxis !== "x";
     this.transformControls.showY = lockedAxis !== "y";
@@ -1151,11 +1361,21 @@ export class ArchitectureEditor {
       const isCurveHandleDrag =
         attachedObject === this.curveHandle && this.curveHandleEnabled && selected.isCurved?.();
       const isElementDrag = attachedObject === selected.group;
+      const isKernelHandleDrag = attachedObject === this.kernelHandle && this.kernelHandleEnabled;
 
-      if (isCurveHandleDrag || isElementDrag) {
+      if (isCurveHandleDrag || isElementDrag || isKernelHandleDrag) {
         this.recordUndoSnapshot();
         this.transformUndoCaptured = true;
       }
+    }
+
+    if (attachedObject === this.kernelHandle && this.kernelHandleEnabled) {
+      if (this.updateKernelOffsetFromHandle()) {
+        this.updateSelectionHelpers();
+        this.emitDocumentChange();
+        this.emitSelectionChange();
+      }
+      return;
     }
 
     if (attachedObject === this.curveHandle && this.curveHandleEnabled && selected.isCurved?.()) {
@@ -1191,6 +1411,59 @@ export class ArchitectureEditor {
       this.emitDocumentChange();
       this.emitSelectionChange();
     }
+  }
+
+  updateKernelOffsetFromHandle() {
+    const sourceId = this.kernelHandle.userData.kernelSourceId;
+    if (typeof sourceId !== "string" || sourceId.trim().length === 0) {
+      return false;
+    }
+
+    const metadata = this.tensorRelationOverlay.getKernelRelationMetadata(sourceId);
+    if (!metadata) {
+      return false;
+    }
+
+    const sourceElement = this.elements.get(sourceId);
+    if (!sourceElement || sourceElement.type !== "tensor") {
+      return false;
+    }
+
+    const parentElement = this.elements.get(metadata.parentId);
+    if (!parentElement) {
+      return false;
+    }
+
+    const kernelConfig = sourceElement.config?.data?.convolution?.kernel;
+    if (!kernelConfig) {
+      return false;
+    }
+
+    const handleWorld = this.kernelHandle.getWorldPosition(new THREE.Vector3());
+    const local = parentElement.group.worldToLocal(handleWorld.clone());
+
+    const constrainedLocal = metadata.kernelCenterLocal.clone();
+    constrainedLocal[metadata.fixedAxis.axis] = metadata.fixedAxis.value;
+    constrainedLocal.y = THREE.MathUtils.clamp(local.y, metadata.movementBounds.y.min, metadata.movementBounds.y.max);
+    constrainedLocal.z = THREE.MathUtils.clamp(local.z, metadata.movementBounds.z.min, metadata.movementBounds.z.max);
+
+    const nextOffsetY = constrainedLocal.y - metadata.baseKernelCenterLocal.y;
+    const nextOffsetZ = constrainedLocal.z - metadata.baseKernelCenterLocal.z;
+
+    const offset = Array.isArray(kernelConfig.offset) && kernelConfig.offset.length === 3
+      ? kernelConfig.offset
+      : [0, 0, 0];
+    offset[0] = 0;
+    offset[1] = nextOffsetY;
+    offset[2] = nextOffsetZ;
+    kernelConfig.offset = offset;
+
+    const constrainedWorld = parentElement.group.localToWorld(constrainedLocal.clone());
+    const parentQuaternion = parentElement.group.getWorldQuaternion(new THREE.Quaternion());
+    this.kernelHandle.position.copy(constrainedWorld);
+    this.kernelHandle.quaternion.copy(parentQuaternion);
+
+    return true;
   }
 
   setBackground(backgroundColor) {
@@ -1242,12 +1515,14 @@ export class ArchitectureEditor {
     const previousState = {
       transformControlsHelperVisible: this.transformControlsHelper.visible,
       curveHandleVisible: this.curveHandle.visible,
+      kernelHandleVisible: this.kernelHandle.visible,
       selectionHelpersVisible: this.selectionHelpers.map((helper) => helper.visible),
       alignmentGuidesVisible: this.alignmentGuidesGroup.visible
     };
 
     this.transformControlsHelper.visible = false;
     this.curveHandle.visible = false;
+    this.kernelHandle.visible = false;
     for (const helper of this.selectionHelpers) {
       helper.visible = false;
     }
@@ -1258,6 +1533,7 @@ export class ArchitectureEditor {
     } finally {
       this.transformControlsHelper.visible = previousState.transformControlsHelperVisible;
       this.curveHandle.visible = previousState.curveHandleVisible;
+      this.kernelHandle.visible = previousState.kernelHandleVisible;
       for (let index = 0; index < this.selectionHelpers.length; index += 1) {
         const helper = this.selectionHelpers[index];
         const wasVisible = previousState.selectionHelpersVisible[index];
@@ -1277,7 +1553,21 @@ export class ArchitectureEditor {
     this.onSelectionChange(this.getSelectedElementConfig());
   }
 
+  refreshTensorRelationOverlay() {
+    if (!this.tensorRelationOverlay) {
+      return;
+    }
+    this.tensorRelationOverlay.rebuild(this.elements);
+    if (this.kernelHandleEnabled && this.kernelHandle.visible) {
+      const selected = this.getSelectedElement();
+      if (!this.syncKernelHandlePlacement(selected)) {
+        this.setKernelHandleEnabled(false);
+      }
+    }
+  }
+
   emitDocumentChange() {
+    this.refreshTensorRelationOverlay();
     if (!this.onDocumentChange) {
       return;
     }

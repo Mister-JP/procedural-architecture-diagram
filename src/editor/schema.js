@@ -15,19 +15,59 @@ const DEFAULT_SCENE = {
 };
 
 const DEFAULT_TENSOR_DATA = {
-  shape: [3, 3, 3],
-  voxel: {
-    pixelSize: 2,
-    pixelDepth: 1.2,
-    gap: 0.25,
-    layerGap: 0.35
+  dimensions: {
+    channels: 3,
+    height: 3,
+    width: 3
+  },
+  scale: {
+    channel: 1.2,
+    height: 2,
+    width: 2
   },
   style: {
     startColor: "#ff7676",
     endColor: "#4a0606",
-    fillOpacity: 1,
+    fillOpacity: 0.42,
     borderColor: "#111111",
-    borderOpacity: 1
+    borderOpacity: 0.44
+  },
+  labels: {
+    enabled: true,
+    textColor: "#0f172a",
+    textOpacity: 0.95,
+    backgroundColor: "#ffffff",
+    backgroundOpacity: 0.78,
+    borderColor: "#334155",
+    borderOpacity: 0.35,
+    scaleHeight: 2.8
+  },
+  convolution: {
+    parentTensorId: "",
+    targetTensorId: "",
+    branchOrder: 0,
+    layout: {
+      branchSpacing: 1,
+      branchOffset: [0, 0, 0]
+    },
+    kernel: {
+      height: 3,
+      width: 3,
+      channels: null,
+      offset: [0, 0, 0],
+      color: "#3b82f6",
+      opacity: 0.82,
+      borderColor: "#0f172a",
+      borderOpacity: 0.68,
+      labelScaleHeight: 2.4
+    },
+    pyramid: {
+      color: "#60a5fa",
+      opacity: 0.24,
+      borderColor: "#1d4ed8",
+      borderOpacity: 0.45,
+      spread: 1.65
+    }
   }
 };
 
@@ -87,6 +127,21 @@ function asInteger(value, fallback, min = 1) {
   return Math.max(min, Math.round(asNumber(value, fallback)));
 }
 
+function asOptionalInteger(value, fallback = null, min = 1) {
+  if (value == null || value === "") {
+    return fallback;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return Math.max(min, Math.round(parsed));
+}
+
+function asNonNegativeInteger(value, fallback = 0) {
+  return Math.max(0, Math.round(asNumber(value, fallback)));
+}
+
 function clamp(value, min, max, fallback) {
   const number = asNumber(value, fallback);
   return Math.min(max, Math.max(min, number));
@@ -132,17 +187,38 @@ function normalizeTransform(transform) {
 }
 
 function normalizeTensorData(data) {
+  const legacyShape = Array.isArray(data?.shape) ? data.shape : [];
+  const legacyVoxel = data?.voxel ?? {};
+  const legacyChannels = asInteger(legacyShape[0], DEFAULT_TENSOR_DATA.dimensions.channels);
+  const legacyHeight = asInteger(legacyShape[1], DEFAULT_TENSOR_DATA.dimensions.height);
+  const legacyWidth = asInteger(legacyShape[2], DEFAULT_TENSOR_DATA.dimensions.width);
+  const legacySpatialScale = clamp(
+    legacyVoxel.pixelSize,
+    0.1,
+    80,
+    DEFAULT_TENSOR_DATA.scale.height
+  );
+  const legacyChannelScale = clamp(
+    legacyVoxel.pixelDepth,
+    0.1,
+    80,
+    DEFAULT_TENSOR_DATA.scale.channel
+  );
+  const normalizedParentTensorId =
+    typeof data?.convolution?.parentTensorId === "string" ? data.convolution.parentTensorId.trim() : "";
+  const normalizedTargetTensorId =
+    typeof data?.convolution?.targetTensorId === "string" ? data.convolution.targetTensorId.trim() : "";
+
   return {
-    shape: [
-      asInteger(data?.shape?.[0], DEFAULT_TENSOR_DATA.shape[0]),
-      asInteger(data?.shape?.[1], DEFAULT_TENSOR_DATA.shape[1]),
-      asInteger(data?.shape?.[2], DEFAULT_TENSOR_DATA.shape[2])
-    ],
-    voxel: {
-      pixelSize: clamp(data?.voxel?.pixelSize, 0.2, 20, DEFAULT_TENSOR_DATA.voxel.pixelSize),
-      pixelDepth: clamp(data?.voxel?.pixelDepth, 0.1, 20, DEFAULT_TENSOR_DATA.voxel.pixelDepth),
-      gap: clamp(data?.voxel?.gap, 0, 10, DEFAULT_TENSOR_DATA.voxel.gap),
-      layerGap: clamp(data?.voxel?.layerGap, 0, 10, DEFAULT_TENSOR_DATA.voxel.layerGap)
+    dimensions: {
+      channels: asInteger(data?.dimensions?.channels, legacyChannels),
+      height: asInteger(data?.dimensions?.height, legacyHeight),
+      width: asInteger(data?.dimensions?.width, legacyWidth)
+    },
+    scale: {
+      channel: clamp(data?.scale?.channel, 0.1, 80, legacyChannelScale),
+      height: clamp(data?.scale?.height, 0.1, 80, legacySpatialScale),
+      width: clamp(data?.scale?.width, 0.1, 80, legacySpatialScale)
     },
     style: {
       startColor: asColor(data?.style?.startColor, DEFAULT_TENSOR_DATA.style.startColor),
@@ -150,6 +226,88 @@ function normalizeTensorData(data) {
       fillOpacity: clamp(data?.style?.fillOpacity, 0, 1, DEFAULT_TENSOR_DATA.style.fillOpacity),
       borderColor: asColor(data?.style?.borderColor, DEFAULT_TENSOR_DATA.style.borderColor),
       borderOpacity: clamp(data?.style?.borderOpacity, 0, 1, DEFAULT_TENSOR_DATA.style.borderOpacity)
+    },
+    labels: {
+      enabled:
+        typeof data?.labels?.enabled === "boolean"
+          ? data.labels.enabled
+          : DEFAULT_TENSOR_DATA.labels.enabled,
+      textColor: asColor(data?.labels?.textColor, DEFAULT_TENSOR_DATA.labels.textColor),
+      textOpacity: clamp(data?.labels?.textOpacity, 0, 1, DEFAULT_TENSOR_DATA.labels.textOpacity),
+      backgroundColor: asColor(data?.labels?.backgroundColor, DEFAULT_TENSOR_DATA.labels.backgroundColor),
+      backgroundOpacity: clamp(
+        data?.labels?.backgroundOpacity,
+        0,
+        1,
+        DEFAULT_TENSOR_DATA.labels.backgroundOpacity
+      ),
+      borderColor: asColor(data?.labels?.borderColor, DEFAULT_TENSOR_DATA.labels.borderColor),
+      borderOpacity: clamp(data?.labels?.borderOpacity, 0, 1, DEFAULT_TENSOR_DATA.labels.borderOpacity),
+      scaleHeight: clamp(data?.labels?.scaleHeight, 0.4, 30, DEFAULT_TENSOR_DATA.labels.scaleHeight)
+    },
+    convolution: {
+      parentTensorId: normalizedParentTensorId,
+      targetTensorId: normalizedTargetTensorId,
+      branchOrder: asNonNegativeInteger(
+        data?.convolution?.branchOrder,
+        DEFAULT_TENSOR_DATA.convolution.branchOrder
+      ),
+      layout: {
+        branchSpacing: clamp(
+          data?.convolution?.layout?.branchSpacing,
+          0,
+          4,
+          DEFAULT_TENSOR_DATA.convolution.layout.branchSpacing
+        ),
+        branchOffset: asVector3(
+          data?.convolution?.layout?.branchOffset,
+          DEFAULT_TENSOR_DATA.convolution.layout.branchOffset
+        )
+      },
+      kernel: {
+        height: asInteger(data?.convolution?.kernel?.height, DEFAULT_TENSOR_DATA.convolution.kernel.height),
+        width: asInteger(data?.convolution?.kernel?.width, DEFAULT_TENSOR_DATA.convolution.kernel.width),
+        channels: asOptionalInteger(data?.convolution?.kernel?.channels, null),
+        offset: asVector3(data?.convolution?.kernel?.offset, DEFAULT_TENSOR_DATA.convolution.kernel.offset),
+        color: asColor(data?.convolution?.kernel?.color, DEFAULT_TENSOR_DATA.convolution.kernel.color),
+        opacity: clamp(data?.convolution?.kernel?.opacity, 0, 1, DEFAULT_TENSOR_DATA.convolution.kernel.opacity),
+        borderColor: asColor(
+          data?.convolution?.kernel?.borderColor,
+          DEFAULT_TENSOR_DATA.convolution.kernel.borderColor
+        ),
+        borderOpacity: clamp(
+          data?.convolution?.kernel?.borderOpacity,
+          0,
+          1,
+          DEFAULT_TENSOR_DATA.convolution.kernel.borderOpacity
+        ),
+        labelScaleHeight: clamp(
+          data?.convolution?.kernel?.labelScaleHeight,
+          0.3,
+          40,
+          DEFAULT_TENSOR_DATA.convolution.kernel.labelScaleHeight
+        )
+      },
+      pyramid: {
+        color: asColor(data?.convolution?.pyramid?.color, DEFAULT_TENSOR_DATA.convolution.pyramid.color),
+        opacity: clamp(
+          data?.convolution?.pyramid?.opacity,
+          0,
+          1,
+          DEFAULT_TENSOR_DATA.convolution.pyramid.opacity
+        ),
+        borderColor: asColor(
+          data?.convolution?.pyramid?.borderColor,
+          DEFAULT_TENSOR_DATA.convolution.pyramid.borderColor
+        ),
+        borderOpacity: clamp(
+          data?.convolution?.pyramid?.borderOpacity,
+          0,
+          1,
+          DEFAULT_TENSOR_DATA.convolution.pyramid.borderOpacity
+        ),
+        spread: clamp(data?.convolution?.pyramid?.spread, 0.6, 8, DEFAULT_TENSOR_DATA.convolution.pyramid.spread)
+      }
     }
   };
 }

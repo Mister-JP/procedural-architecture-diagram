@@ -247,6 +247,14 @@ canvas {
   font: 600 12px/1.15 "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
 }
 
+.toggle-row input[type="checkbox"] {
+  justify-self: start;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
 .field-input {
   min-height: 31px;
   border: 1px solid rgba(167, 219, 247, 0.55);

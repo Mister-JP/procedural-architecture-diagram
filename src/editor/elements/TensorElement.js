@@ -1,35 +1,40 @@
 import * as THREE from "three";
 import { BaseElement } from "./BaseElement.js";
 import { TensorVolume } from "../../core/TensorVolume.js";
-import { getAxisSpan } from "../../core/tensor-math.js";
-import { createGradientResolver } from "../../core/color-utils.js";
+import { resolveTensorSpans } from "../../core/tensor-geometry.js";
+
+function toRgba(colorHex, opacity) {
+  const color = new THREE.Color(colorHex);
+  const r = Math.round(color.r * 255);
+  const g = Math.round(color.g * 255);
+  const b = Math.round(color.b * 255);
+  const alpha = THREE.MathUtils.clamp(opacity, 0, 1);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
 
 export class TensorElement extends BaseElement {
   buildContent(config) {
     const group = new THREE.Group();
-    const {
-      shape: [channels, height, width],
-      voxel,
-      style
-    } = config.data;
-
-    const widthSpan = getAxisSpan(width, voxel.pixelSize, voxel.gap);
-    const heightSpan = getAxisSpan(height, voxel.pixelSize, voxel.gap);
-    const depthSpan = getAxisSpan(channels, voxel.pixelDepth, voxel.layerGap);
-
-    const gradient = createGradientResolver(
-      new THREE.Color(style.startColor).getHex(),
-      new THREE.Color(style.endColor).getHex()
-    );
+    const { dimensions, scale, style, labels } = config.data;
+    const spans = resolveTensorSpans(config.data);
 
     this.tensorVolume = new TensorVolume({
-      shape: [channels, height, width],
-      upperLeft: new THREE.Vector3(-widthSpan * 0.5, heightSpan * 0.5, depthSpan * 0.5),
-      pixelSize: voxel.pixelSize,
-      pixelDepth: voxel.pixelDepth,
-      gap: voxel.gap,
-      layerGap: voxel.layerGap,
-      channelColor: gradient
+      shape: [dimensions.channels, dimensions.height, dimensions.width],
+      upperLeft: new THREE.Vector3(-spans.channels * 0.5, spans.height * 0.5, spans.width * 0.5),
+      pixelSize: scale.width,
+      pixelWidth: scale.width,
+      pixelHeight: scale.height,
+      pixelDepth: scale.channel,
+      startColor: style.startColor,
+      endColor: style.endColor,
+      showDimensionLabels: labels.enabled,
+      labelStyle: {
+        textColor: toRgba(labels.textColor, labels.textOpacity),
+        backgroundColor: labels.backgroundColor,
+        backgroundOpacity: labels.backgroundOpacity,
+        borderColor: toRgba(labels.borderColor, labels.borderOpacity),
+        scaleHeight: labels.scaleHeight
+      }
     });
 
     this.tensorVolume.setFillOpacity(style.fillOpacity);
