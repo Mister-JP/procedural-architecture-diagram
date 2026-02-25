@@ -341,11 +341,6 @@ export class ArchitectureEditor {
     this.refreshTensorRelationOverlay();
   }
 
-  clearUndoHistory() {
-    this.undoStack = [];
-    this.emitHistoryChange();
-  }
-
   canUndo() {
     return this.undoStack.length > 0;
   }
@@ -731,10 +726,6 @@ export class ArchitectureEditor {
     }
   }
 
-  getKernelHandleTargetSourceId() {
-    return this.kernelHandleTargetSourceId;
-  }
-
   resolveKernelHandleSourceId(tensorElement) {
     if (!tensorElement || tensorElement.type !== "tensor") {
       return null;
@@ -823,10 +814,6 @@ export class ArchitectureEditor {
       this.curveHandleEnabled = false;
     }
     this.refreshSelectionVisualization();
-  }
-
-  canEditKernelPlacement(elementId = this.selectedId) {
-    return this.getKernelPlacementOptions(elementId).length > 0;
   }
 
   setTransformMode(mode) {

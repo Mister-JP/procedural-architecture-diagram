@@ -12,20 +12,18 @@ function toPositiveNumber(value, fallback) {
 }
 
 export function resolveTensorDimensions(data = {}) {
-  const legacyShape = Array.isArray(data.shape) ? data.shape : [];
   return {
-    channels: toPositiveInteger(data?.dimensions?.channels, legacyShape[0] ?? 3),
-    height: toPositiveInteger(data?.dimensions?.height, legacyShape[1] ?? 3),
-    width: toPositiveInteger(data?.dimensions?.width, legacyShape[2] ?? 3)
+    channels: toPositiveInteger(data?.dimensions?.channels, 3),
+    height: toPositiveInteger(data?.dimensions?.height, 3),
+    width: toPositiveInteger(data?.dimensions?.width, 3)
   };
 }
 
 export function resolveTensorScale(data = {}) {
-  const legacyVoxel = data?.voxel ?? {};
   return {
-    channels: toPositiveNumber(data?.scale?.channel, legacyVoxel.pixelDepth ?? 1.2),
-    height: toPositiveNumber(data?.scale?.height, legacyVoxel.pixelSize ?? 2),
-    width: toPositiveNumber(data?.scale?.width, legacyVoxel.pixelSize ?? 2)
+    channels: toPositiveNumber(data?.scale?.channel, 1.2),
+    height: toPositiveNumber(data?.scale?.height, 2),
+    width: toPositiveNumber(data?.scale?.width, 2)
   };
 }
 

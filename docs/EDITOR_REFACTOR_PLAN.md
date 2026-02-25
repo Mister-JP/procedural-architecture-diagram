@@ -6,7 +6,7 @@ Move hardcoded architecture topology out of application code into a user-editabl
 ## Scope Delivered
 - Hideable left tool panel and hideable right inspector panel.
 - Element creation flows for:
-  - `tensor` (voxel volume with shape + styling controls)
+  - `tensor` (voxel volume with dimensions/scale + styling controls)
   - `arrow` (`3d`, `2d`, `dotted`, `curved`)
   - `label` (text, font, size, color, background, border)
 - Right inspector with live 3D preview.
@@ -47,7 +47,11 @@ Design choices aligned to those docs:
       "type": "tensor",
       "name": "Tensor",
       "transform": { "position": [0,0,0], "rotation": [0,0,0] },
-      "data": { "shape": [3,3,3], "voxel": {}, "style": {} }
+      "data": {
+        "dimensions": { "channels": 3, "height": 3, "width": 3 },
+        "scale": { "channel": 1.2, "height": 2, "width": 2 },
+        "style": {}
+      }
     }
   ]
 }
@@ -110,7 +114,6 @@ Responsibilities:
 
 ## Implementation Notes
 - Default starter document is `src/config/default-architecture.json`.
-- Legacy pipeline classes remain in the repository but are no longer the app entry flow.
 - New runtime entrypoint is JSON-driven (`src/main.js` + `src/editor/*`).
 
 ## Future Enhancements

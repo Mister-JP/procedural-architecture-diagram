@@ -187,23 +187,6 @@ function normalizeTransform(transform) {
 }
 
 function normalizeTensorData(data) {
-  const legacyShape = Array.isArray(data?.shape) ? data.shape : [];
-  const legacyVoxel = data?.voxel ?? {};
-  const legacyChannels = asInteger(legacyShape[0], DEFAULT_TENSOR_DATA.dimensions.channels);
-  const legacyHeight = asInteger(legacyShape[1], DEFAULT_TENSOR_DATA.dimensions.height);
-  const legacyWidth = asInteger(legacyShape[2], DEFAULT_TENSOR_DATA.dimensions.width);
-  const legacySpatialScale = clamp(
-    legacyVoxel.pixelSize,
-    0.1,
-    80,
-    DEFAULT_TENSOR_DATA.scale.height
-  );
-  const legacyChannelScale = clamp(
-    legacyVoxel.pixelDepth,
-    0.1,
-    80,
-    DEFAULT_TENSOR_DATA.scale.channel
-  );
   const normalizedParentTensorId =
     typeof data?.convolution?.parentTensorId === "string" ? data.convolution.parentTensorId.trim() : "";
   const normalizedTargetTensorId =
@@ -211,14 +194,14 @@ function normalizeTensorData(data) {
 
   return {
     dimensions: {
-      channels: asInteger(data?.dimensions?.channels, legacyChannels),
-      height: asInteger(data?.dimensions?.height, legacyHeight),
-      width: asInteger(data?.dimensions?.width, legacyWidth)
+      channels: asInteger(data?.dimensions?.channels, DEFAULT_TENSOR_DATA.dimensions.channels),
+      height: asInteger(data?.dimensions?.height, DEFAULT_TENSOR_DATA.dimensions.height),
+      width: asInteger(data?.dimensions?.width, DEFAULT_TENSOR_DATA.dimensions.width)
     },
     scale: {
-      channel: clamp(data?.scale?.channel, 0.1, 80, legacyChannelScale),
-      height: clamp(data?.scale?.height, 0.1, 80, legacySpatialScale),
-      width: clamp(data?.scale?.width, 0.1, 80, legacySpatialScale)
+      channel: clamp(data?.scale?.channel, 0.1, 80, DEFAULT_TENSOR_DATA.scale.channel),
+      height: clamp(data?.scale?.height, 0.1, 80, DEFAULT_TENSOR_DATA.scale.height),
+      width: clamp(data?.scale?.width, 0.1, 80, DEFAULT_TENSOR_DATA.scale.width)
     },
     style: {
       startColor: asColor(data?.style?.startColor, DEFAULT_TENSOR_DATA.style.startColor),
