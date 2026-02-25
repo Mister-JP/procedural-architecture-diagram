@@ -54,6 +54,44 @@ function toNumber(value, fallback) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function toInteger(value, fallback) {
+  return Math.round(toNumber(value, fallback));
+}
+
+function clampInteger(value, min, max, fallback = min) {
+  const parsed = toInteger(value, fallback);
+  return Math.min(max, Math.max(min, parsed));
+}
+
+function getTensorChannelCount(tensorData) {
+  return Math.max(1, toInteger(tensorData?.dimensions?.channels, 1));
+}
+
+function normalizeTensorChannelColorRanges(tensorData) {
+  if (!tensorData?.style) {
+    return;
+  }
+
+  const channelCount = getTensorChannelCount(tensorData);
+  const rawRanges = Array.isArray(tensorData.style.channelColorRanges)
+    ? tensorData.style.channelColorRanges
+    : [];
+
+  tensorData.style.channelColorRanges = rawRanges.map((range) => {
+    const lower = clampInteger(range?.minChannel, 1, channelCount, 1);
+    const upper = clampInteger(range?.maxChannel, 1, channelCount, channelCount);
+
+    return {
+      minChannel: Math.min(lower, upper),
+      maxChannel: Math.max(lower, upper),
+      color:
+        typeof range?.color === "string" && range.color.trim().length > 0
+          ? range.color
+          : "#2e6cff"
+    };
+  });
+}
+
 function toResolution(value, fallback, min = 64, max = 8192) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) {
@@ -281,14 +319,18 @@ function addReadOnlyField(container, { label, value }) {
 
 function addNumberField(
   container,
-  { label, value, min = -99999, max = 99999, step = 1, onInput, integer = false }
+  { label, value, min = null, max = null, step = 1, onInput, integer = false }
 ) {
   const row = createFieldRow(label);
   const input = document.createElement("input");
   input.className = "field-input";
   input.type = "number";
-  input.min = String(min);
-  input.max = String(max);
+  if (Number.isFinite(min)) {
+    input.min = String(min);
+  }
+  if (Number.isFinite(max)) {
+    input.max = String(max);
+  }
   input.step = String(step);
   input.value = String(value);
   input.addEventListener("input", () => {
@@ -371,6 +413,44 @@ function addRangeField(container, { label, value, min, max, step, suffix = "", o
   return range;
 }
 
+function addIntegerRangeField(container, { label, value, min, max, onInput }) {
+  const row = createFieldRow(label);
+  row.classList.add("range-row");
+
+  const resolveMin = typeof min === "function" ? min : () => min;
+  const resolveMax = typeof max === "function" ? max : () => max;
+
+  const range = document.createElement("input");
+  range.className = "field-input range-input";
+  range.type = "range";
+  range.step = "1";
+
+  const valueChip = document.createElement("span");
+  valueChip.className = "range-value";
+
+  const applyValue = (rawValue, shouldEmit = true) => {
+    const resolvedMin = toInteger(resolveMin(), 1);
+    const resolvedMax = Math.max(resolvedMin, toInteger(resolveMax(), resolvedMin));
+    const nextValue = clampInteger(rawValue, resolvedMin, resolvedMax, value);
+
+    range.min = String(resolvedMin);
+    range.max = String(resolvedMax);
+    range.value = String(nextValue);
+    valueChip.textContent = String(nextValue);
+
+    if (shouldEmit) {
+      onInput(nextValue);
+    }
+  };
+
+  applyValue(value, false);
+  range.addEventListener("input", () => applyValue(range.value, true));
+
+  row.append(range, valueChip);
+  container.appendChild(row);
+  return range;
+}
+
 function addSectionTitle(container, title) {
   const heading = document.createElement("h4");
   heading.className = "section-title";
@@ -418,6 +498,7 @@ function withCurrentValueOption(options, value, fallbackLabel = "Custom") {
 function renderTensorInspector(editor) {
   const tensor = uiState.draftElement.data;
   const currentTensorId = uiState.draftElement.id;
+  normalizeTensorChannelColorRanges(tensor);
 
   addSectionTitle(inspectorFields, "Structure");
   addReadOnlyField(inspectorFields, {
@@ -433,6 +514,7 @@ function renderTensorInspector(editor) {
     integer: true,
     onInput: (value) => {
       uiState.draftElement.data.dimensions.channels = value;
+      normalizeTensorChannelColorRanges(uiState.draftElement.data);
       syncDraftAndPreview(editor);
     }
   });
@@ -513,6 +595,91 @@ function renderTensorInspector(editor) {
       syncDraftAndPreview(editor);
     }
   });
+
+  addSectionTitle(inspectorFields, "Channel Axis Colors");
+  const getChannelCount = () => getTensorChannelCount(uiState.draftElement.data);
+  const channelColorRanges = tensor.style.channelColorRanges;
+
+  for (let index = 0; index < channelColorRanges.length; index += 1) {
+    addColorField(inspectorFields, {
+      label: `Range ${index + 1} Color`,
+      value: channelColorRanges[index].color,
+      onInput: (value) => {
+        const currentRange = uiState.draftElement.data.style.channelColorRanges[index];
+        if (!currentRange) {
+          return;
+        }
+        currentRange.color = value;
+        syncDraftAndPreview(editor);
+      }
+    });
+
+    addIntegerRangeField(inspectorFields, {
+      label: `Range ${index + 1} Min`,
+      value: channelColorRanges[index].minChannel,
+      min: 1,
+      max: () => {
+        const currentRange = uiState.draftElement.data.style.channelColorRanges[index];
+        return currentRange ? Math.min(getChannelCount(), currentRange.maxChannel) : getChannelCount();
+      },
+      onInput: (value) => {
+        const currentRange = uiState.draftElement.data.style.channelColorRanges[index];
+        if (!currentRange) {
+          return;
+        }
+        currentRange.minChannel = value;
+        normalizeTensorChannelColorRanges(uiState.draftElement.data);
+        syncDraftAndPreview(editor);
+      }
+    });
+
+    addIntegerRangeField(inspectorFields, {
+      label: `Range ${index + 1} Max`,
+      value: channelColorRanges[index].maxChannel,
+      min: () => {
+        const currentRange = uiState.draftElement.data.style.channelColorRanges[index];
+        return currentRange ? currentRange.minChannel : 1;
+      },
+      max: () => getChannelCount(),
+      onInput: (value) => {
+        const currentRange = uiState.draftElement.data.style.channelColorRanges[index];
+        if (!currentRange) {
+          return;
+        }
+        currentRange.maxChannel = value;
+        normalizeTensorChannelColorRanges(uiState.draftElement.data);
+        syncDraftAndPreview(editor);
+      }
+    });
+
+    const removeRow = createFieldRow(`Range ${index + 1}`);
+    const removeButton = createButton("Remove Range", { className: "field-action" });
+    removeButton.addEventListener("click", () => {
+      uiState.draftElement.data.style.channelColorRanges.splice(index, 1);
+      normalizeTensorChannelColorRanges(uiState.draftElement.data);
+      syncDraftAndPreview(editor);
+      renderInspector(editor);
+    });
+    removeRow.appendChild(removeButton);
+    inspectorFields.appendChild(removeRow);
+  }
+
+  const addRangeRow = createFieldRow("Add Range");
+  const addRangeButton = createButton("Add Channel Range", { className: "field-action" });
+  addRangeButton.addEventListener("click", () => {
+    const channelCount = getChannelCount();
+    uiState.draftElement.data.style.channelColorRanges.push({
+      minChannel: 1,
+      maxChannel: channelCount,
+      color: "#2e6cff"
+    });
+    normalizeTensorChannelColorRanges(uiState.draftElement.data);
+    syncDraftAndPreview(editor);
+    renderInspector(editor);
+  });
+  addRangeRow.appendChild(addRangeButton);
+  inspectorFields.appendChild(addRangeRow);
+
   addRangeField(inspectorFields, {
     label: "Fill Opacity",
     value: tensor.style.fillOpacity,
@@ -930,7 +1097,6 @@ function renderArrowInspector(editor) {
     label: "Length",
     value: arrow.length,
     min: 4,
-    max: 3000,
     step: 0.5,
     onInput: (value) => {
       uiState.draftElement.data.length = value;

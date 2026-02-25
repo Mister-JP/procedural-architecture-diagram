@@ -14,8 +14,28 @@ function computeAxisSpan(length, unitSize) {
   return length * unitSize;
 }
 
-function createGradientBoxGeometry(width, height, depth, startColor, endColor) {
-  const geometry = new THREE.BoxGeometry(width, height, depth);
+function resolveChannelIndex(x, channelSpan, channelCount) {
+  if (channelCount <= 1 || channelSpan <= 1e-6) {
+    return 0;
+  }
+
+  const t = THREE.MathUtils.clamp((x + channelSpan * 0.5) / channelSpan, 0, 1);
+  const mapped = Math.floor(t * channelCount);
+  return THREE.MathUtils.clamp(mapped, 0, channelCount - 1);
+}
+
+function createGradientBoxGeometry(
+  width,
+  height,
+  depth,
+  startColor,
+  endColor,
+  { channelColor = null, channels = 1 } = {}
+) {
+  const useChannelColor = typeof channelColor === "function";
+  const channelCount = Math.max(1, Math.round(channels));
+  const widthSegments = useChannelColor ? channelCount : 1;
+  const geometry = new THREE.BoxGeometry(width, height, depth, widthSegments, 1, 1);
   const position = geometry.getAttribute("position");
   const colors = new Float32Array(position.count * 3);
 
@@ -23,14 +43,25 @@ function createGradientBoxGeometry(width, height, depth, startColor, endColor) {
   const end = new THREE.Color(endColor);
 
   for (let index = 0; index < position.count; index += 1) {
-    const z = position.getZ(index);
-    const t = depth <= 1e-6 ? 0.5 : THREE.MathUtils.clamp((z + depth * 0.5) / depth, 0, 1);
-    const blended = start.clone().lerp(end, t);
+    let vertexColor = null;
+    if (useChannelColor) {
+      const channelIndex = resolveChannelIndex(position.getX(index), width, channelCount);
+      const resolvedColor = channelColor(channelIndex, channelCount);
+      if (resolvedColor != null) {
+        vertexColor = new THREE.Color(resolvedColor);
+      }
+    }
+
+    if (!vertexColor) {
+      const z = position.getZ(index);
+      const t = depth <= 1e-6 ? 0.5 : THREE.MathUtils.clamp((z + depth * 0.5) / depth, 0, 1);
+      vertexColor = start.clone().lerp(end, t);
+    }
 
     const base = index * 3;
-    colors[base] = blended.r;
-    colors[base + 1] = blended.g;
-    colors[base + 2] = blended.b;
+    colors[base] = vertexColor.r;
+    colors[base + 1] = vertexColor.g;
+    colors[base + 2] = vertexColor.b;
   }
 
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
@@ -122,7 +153,11 @@ export class TensorVolume {
       Math.max(this.heightSpan, 0.001),
       Math.max(this.widthSpan, 0.001),
       this.startColor,
-      this.endColor
+      this.endColor,
+      {
+        channelColor: this.channelColor,
+        channels: this.channels
+      }
     );
 
     this.meshMaterial = new THREE.MeshBasicMaterial({

@@ -30,7 +30,8 @@ const DEFAULT_TENSOR_DATA = {
     endColor: "#4a0606",
     fillOpacity: 0.42,
     borderColor: "#111111",
-    borderOpacity: 0.44
+    borderOpacity: 0.44,
+    channelColorRanges: []
   },
   labels: {
     enabled: true,
@@ -179,6 +180,34 @@ function asVector3(value, fallback) {
   ];
 }
 
+function normalizeTensorChannelColorRanges(ranges, channelCount) {
+  if (!Array.isArray(ranges)) {
+    return [];
+  }
+
+  const tensorChannelCount = Math.max(1, Math.round(asNumber(channelCount, 1)));
+
+  return ranges
+    .map((range) => {
+      const color = asColor(range?.color, null);
+      if (!color) {
+        return null;
+      }
+
+      const minRaw = asInteger(range?.minChannel, 1, 1);
+      const maxRaw = asInteger(range?.maxChannel, tensorChannelCount, 1);
+      const minChannel = Math.min(tensorChannelCount, Math.max(1, Math.min(minRaw, maxRaw)));
+      const maxChannel = Math.min(tensorChannelCount, Math.max(1, Math.max(minRaw, maxRaw)));
+
+      return {
+        minChannel,
+        maxChannel,
+        color
+      };
+    })
+    .filter(Boolean);
+}
+
 function normalizeTransform(transform) {
   return {
     position: asVector3(transform?.position, DEFAULT_TRANSFORM.position),
@@ -191,10 +220,14 @@ function normalizeTensorData(data) {
     typeof data?.convolution?.parentTensorId === "string" ? data.convolution.parentTensorId.trim() : "";
   const normalizedTargetTensorId =
     typeof data?.convolution?.targetTensorId === "string" ? data.convolution.targetTensorId.trim() : "";
+  const normalizedChannels = asInteger(
+    data?.dimensions?.channels,
+    DEFAULT_TENSOR_DATA.dimensions.channels
+  );
 
   return {
     dimensions: {
-      channels: asInteger(data?.dimensions?.channels, DEFAULT_TENSOR_DATA.dimensions.channels),
+      channels: normalizedChannels,
       height: asInteger(data?.dimensions?.height, DEFAULT_TENSOR_DATA.dimensions.height),
       width: asInteger(data?.dimensions?.width, DEFAULT_TENSOR_DATA.dimensions.width)
     },
@@ -208,7 +241,11 @@ function normalizeTensorData(data) {
       endColor: asColor(data?.style?.endColor, DEFAULT_TENSOR_DATA.style.endColor),
       fillOpacity: clamp(data?.style?.fillOpacity, 0, 1, DEFAULT_TENSOR_DATA.style.fillOpacity),
       borderColor: asColor(data?.style?.borderColor, DEFAULT_TENSOR_DATA.style.borderColor),
-      borderOpacity: clamp(data?.style?.borderOpacity, 0, 1, DEFAULT_TENSOR_DATA.style.borderOpacity)
+      borderOpacity: clamp(data?.style?.borderOpacity, 0, 1, DEFAULT_TENSOR_DATA.style.borderOpacity),
+      channelColorRanges: normalizeTensorChannelColorRanges(
+        data?.style?.channelColorRanges,
+        normalizedChannels
+      )
     },
     labels: {
       enabled:
@@ -299,10 +336,11 @@ function normalizeArrowData(data) {
   const arrowType = ["3d", "2d", "dotted", "curved"].includes(data?.arrowType)
     ? data.arrowType
     : DEFAULT_ARROW_DATA.arrowType;
+  const normalizedLength = Math.max(4, asNumber(data?.length, DEFAULT_ARROW_DATA.length));
 
   return {
     arrowType,
-    length: clamp(data?.length, 4, 3000, DEFAULT_ARROW_DATA.length),
+    length: normalizedLength,
     thickness: clamp(data?.thickness, 0.1, 100, DEFAULT_ARROW_DATA.thickness),
     headLength: clamp(data?.headLength, 0.3, 800, DEFAULT_ARROW_DATA.headLength),
     headWidth: clamp(data?.headWidth, 0.3, 800, DEFAULT_ARROW_DATA.headWidth),

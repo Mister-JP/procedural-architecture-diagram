@@ -12,11 +12,28 @@ function toRgba(colorHex, opacity) {
   return `rgba(${r},${g},${b},${alpha})`;
 }
 
+function createChannelRangeColorResolver(channelColorRanges) {
+  if (!Array.isArray(channelColorRanges) || channelColorRanges.length === 0) {
+    return null;
+  }
+
+  return (channelIndex) => {
+    const channelNumber = channelIndex + 1;
+    for (const range of channelColorRanges) {
+      if (channelNumber >= range.minChannel && channelNumber <= range.maxChannel) {
+        return range.color;
+      }
+    }
+    return null;
+  };
+}
+
 export class TensorElement extends BaseElement {
   buildContent(config) {
     const group = new THREE.Group();
     const { dimensions, scale, style, labels } = config.data;
     const spans = resolveTensorSpans(config.data);
+    const resolveChannelColor = createChannelRangeColorResolver(style.channelColorRanges);
 
     this.tensorVolume = new TensorVolume({
       shape: [dimensions.channels, dimensions.height, dimensions.width],
@@ -27,6 +44,7 @@ export class TensorElement extends BaseElement {
       pixelDepth: scale.channel,
       startColor: style.startColor,
       endColor: style.endColor,
+      channelColor: resolveChannelColor ?? undefined,
       showDimensionLabels: labels.enabled,
       labelStyle: {
         textColor: toRgba(labels.textColor, labels.textOpacity),
