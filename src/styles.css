@@ -64,7 +64,8 @@ canvas {
   width: min(340px, calc(100vw - 28px));
   max-height: calc(100vh - 28px);
   overflow: auto;
-  padding: 12px;
+  box-sizing: border-box;
+  padding: 14px;
   border-radius: 12px;
   border: 1px solid var(--panel-border);
   background: var(--panel-bg);
@@ -137,8 +138,11 @@ canvas {
 }
 
 .panel-section {
-  margin: 6px 0 10px;
-  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 10px;
+  padding: 10px;
   border-radius: 10px;
   border: 1px solid rgba(131, 199, 237, 0.26);
   background: rgba(14, 32, 53, 0.7);
@@ -187,11 +191,11 @@ canvas {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
-  margin: 8px 0;
+  margin: 10px 0 6px;
 }
 
 .panel-help {
-  margin: 8px 2px 0;
+  margin: 10px 2px 2px;
   color: var(--text-muted);
   font: 600 11px/1.35 "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
 }
@@ -228,7 +232,7 @@ canvas {
 }
 
 .section-title {
-  margin: 6px 0 4px;
+  margin: 0;
   color: #cceeff;
   font: 700 11px/1.2 "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
   letter-spacing: 0.35px;
@@ -339,6 +343,98 @@ canvas {
   letter-spacing: 0.2px;
   pointer-events: none;
   z-index: 2;
+}
+
+.load-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  background: rgba(6, 15, 27, 0.56);
+  backdrop-filter: blur(2px);
+}
+
+.load-modal-overlay.active {
+  display: flex;
+}
+
+.load-modal {
+  width: min(440px, calc(100vw - 36px));
+  border: 1px solid rgba(173, 228, 255, 0.55);
+  border-radius: 12px;
+  padding: 14px;
+  background: rgba(10, 24, 43, 0.95);
+  box-shadow: 0 20px 42px rgba(0, 0, 0, 0.38);
+}
+
+.load-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.load-modal-title {
+  margin: 0;
+  font: 800 14px/1.1 "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
+  letter-spacing: 0.28px;
+  text-transform: uppercase;
+}
+
+.load-modal-close,
+.load-modal-button {
+  appearance: none;
+  width: 100%;
+  border: 1px solid rgba(180, 229, 255, 0.6);
+  border-radius: 9px;
+  min-height: 34px;
+  color: var(--text-main);
+  background: var(--button-bg);
+  font: 700 12px/1 "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
+  letter-spacing: 0.15px;
+  cursor: pointer;
+}
+
+.load-modal-close {
+  width: auto;
+  min-width: 74px;
+  padding: 6px 10px;
+}
+
+.load-modal-close:hover,
+.load-modal-button:hover {
+  background: var(--button-bg-hover);
+}
+
+.load-modal-button.subtle {
+  background: rgba(26, 52, 80, 0.85);
+}
+
+.load-modal-view {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.load-modal-hint {
+  margin: 0;
+  color: var(--text-muted);
+  font: 600 12px/1.35 "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
+}
+
+.load-modal-select {
+  min-height: 150px;
+  padding: 6px;
+}
+
+.load-modal-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .color-input {

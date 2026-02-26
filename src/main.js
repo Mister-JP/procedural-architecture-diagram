@@ -10,6 +10,14 @@ import {
 import defaultArchitectureDocument from "./config/default-architecture.json";
 
 const MAX_EXPORT_RESOLUTION = 32768;
+const demoArchitectureDocuments = Object.entries(
+  import.meta.glob("./config/*.json", { eager: true, import: "default" })
+)
+  .map(([modulePath, documentData]) => ({
+    fileName: modulePath.split("/").pop() || modulePath,
+    documentData
+  }))
+  .sort((a, b) => a.fileName.localeCompare(b.fileName, undefined, { sensitivity: "base" }));
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
@@ -467,6 +475,10 @@ let inspectorDeleteButton;
 let preview;
 let importInput;
 let backgroundInput;
+let loadModalOverlay;
+let loadModalSourceView;
+let loadModalDemoView;
+let loadModalDemoSelect;
 let viewModeStatus;
 let viewPlaneButtons = {};
 let exportRegionStatus;
@@ -501,6 +513,55 @@ function syncViewPlaneControls(editor) {
   if (viewModeStatus) {
     viewModeStatus.textContent = activePlane ? `${activePlane} plane` : "3D free";
   }
+}
+
+function applyLoadedArchitecture(editor, documentData, leftPanel, leftShowButton) {
+  const normalized = normalizeDocument(documentData);
+  editor.loadDocument(normalized, { selectFirst: false, emitDocumentChange: true, captureUndo: true });
+  backgroundInput.value = normalized.scene.background;
+  setGlobalBackground(normalized.scene.background);
+
+  disableCurveHandleEditing(editor);
+  uiState.inspectorMode = "create";
+  const draft = createDefaultElement(ELEMENT_TYPES.tensor);
+  draft.transform.position = editor.getInsertionPosition(false);
+  draft.transform.rotation = [0, 0, 0];
+  setDraftElement(draft);
+  renderInspector(editor);
+
+  hideRightPanel();
+  leftPanel.classList.remove("panel-hidden");
+  leftShowButton.hidden = true;
+}
+
+function closeLoadModal() {
+  if (!loadModalOverlay) {
+    return;
+  }
+  loadModalOverlay.hidden = true;
+  loadModalOverlay.classList.remove("active");
+}
+
+function openLoadModal() {
+  if (!loadModalOverlay || !loadModalSourceView || !loadModalDemoView) {
+    return;
+  }
+
+  loadModalSourceView.hidden = false;
+  loadModalDemoView.hidden = true;
+  loadModalOverlay.hidden = false;
+  loadModalOverlay.classList.add("active");
+}
+
+function showLoadDemoView() {
+  if (!loadModalSourceView || !loadModalDemoView || !loadModalDemoSelect) {
+    return;
+  }
+
+  loadModalSourceView.hidden = true;
+  loadModalDemoView.hidden = false;
+  loadModalDemoSelect.selectedIndex = demoArchitectureDocuments.length ? 0 : -1;
+  loadModalDemoSelect.focus();
 }
 
 function disableCurveHandleEditing(editor) {
@@ -1989,7 +2050,7 @@ exportJsonButton.addEventListener("click", () => {
 
 const importJsonButton = createButton("Load", { className: "tool-button compact" });
 importJsonButton.addEventListener("click", () => {
-  importInput.click();
+  openLoadModal();
 });
 
 const exportImageButton = createButton("Export PNG", { className: "tool-button compact full-row" });
@@ -2025,26 +2086,115 @@ importInput.addEventListener("change", async () => {
   try {
     const text = await file.text();
     const parsed = JSON.parse(text);
-    const normalized = normalizeDocument(parsed);
-    editor.loadDocument(normalized, { selectFirst: false, emitDocumentChange: true, captureUndo: true });
-    backgroundInput.value = normalized.scene.background;
-    setGlobalBackground(normalized.scene.background);
-
-    disableCurveHandleEditing(editor);
-    uiState.inspectorMode = "create";
-    const draft = createDefaultElement(ELEMENT_TYPES.tensor);
-    draft.transform.position = editor.getInsertionPosition(false);
-    draft.transform.rotation = [0, 0, 0];
-    setDraftElement(draft);
-    renderInspector(editor);
-
-    hideRightPanel();
-    leftPanel.classList.remove("panel-hidden");
-    leftShowButton.hidden = true;
+    applyLoadedArchitecture(editor, parsed, leftPanel, leftShowButton);
   } catch (error) {
     window.alert(`Unable to import JSON: ${error.message}`);
   } finally {
     importInput.value = "";
+  }
+});
+
+loadModalOverlay = document.createElement("div");
+loadModalOverlay.className = "load-modal-overlay";
+loadModalOverlay.hidden = true;
+
+const loadModal = document.createElement("div");
+loadModal.className = "load-modal";
+loadModal.setAttribute("role", "dialog");
+loadModal.setAttribute("aria-modal", "true");
+loadModal.setAttribute("aria-label", "Load architecture");
+
+const loadModalHeader = document.createElement("div");
+loadModalHeader.className = "load-modal-header";
+
+const loadModalTitle = document.createElement("h3");
+loadModalTitle.className = "load-modal-title";
+loadModalTitle.textContent = "Load Architecture";
+
+const loadModalCloseButton = createButton("Close", { className: "load-modal-close" });
+loadModalCloseButton.addEventListener("click", () => {
+  closeLoadModal();
+});
+loadModalHeader.append(loadModalTitle, loadModalCloseButton);
+
+loadModalSourceView = document.createElement("div");
+loadModalSourceView.className = "load-modal-view";
+
+const loadModalSourceHint = document.createElement("p");
+loadModalSourceHint.className = "load-modal-hint";
+loadModalSourceHint.textContent = "Choose where to load the architecture from.";
+
+const loadFromDemoButton = createButton("Demo Projects", { className: "load-modal-button" });
+loadFromDemoButton.addEventListener("click", () => {
+  if (!demoArchitectureDocuments.length) {
+    window.alert("No demo JSON files were found in src/config.");
+    return;
+  }
+  showLoadDemoView();
+});
+
+const loadFromComputerButton = createButton("Computer JSON", { className: "load-modal-button" });
+loadFromComputerButton.addEventListener("click", () => {
+  closeLoadModal();
+  importInput.click();
+});
+
+loadModalSourceView.append(loadModalSourceHint, loadFromDemoButton, loadFromComputerButton);
+
+loadModalDemoView = document.createElement("div");
+loadModalDemoView.className = "load-modal-view";
+loadModalDemoView.hidden = true;
+
+const loadModalDemoHint = document.createElement("p");
+loadModalDemoHint.className = "load-modal-hint";
+loadModalDemoHint.textContent = "Select a demo architecture file from src/config.";
+
+loadModalDemoSelect = document.createElement("select");
+loadModalDemoSelect.className = "field-input load-modal-select";
+loadModalDemoSelect.size = Math.min(8, Math.max(3, demoArchitectureDocuments.length));
+
+for (const demo of demoArchitectureDocuments) {
+  const option = document.createElement("option");
+  option.value = demo.fileName;
+  option.textContent = demo.fileName;
+  loadModalDemoSelect.appendChild(option);
+}
+
+const loadModalDemoActions = document.createElement("div");
+loadModalDemoActions.className = "load-modal-actions";
+
+const loadDemoBackButton = createButton("Back", { className: "load-modal-button subtle" });
+loadDemoBackButton.addEventListener("click", () => {
+  loadModalDemoView.hidden = true;
+  loadModalSourceView.hidden = false;
+});
+
+const loadDemoConfirmButton = createButton("Load Selected Demo", { className: "load-modal-button" });
+loadDemoConfirmButton.addEventListener("click", () => {
+  const selectedName = loadModalDemoSelect.value;
+  const selectedDemo = demoArchitectureDocuments.find((demo) => demo.fileName === selectedName);
+  if (!selectedDemo) {
+    window.alert("Choose a demo file to continue.");
+    return;
+  }
+
+  try {
+    applyLoadedArchitecture(editor, clone(selectedDemo.documentData), leftPanel, leftShowButton);
+    closeLoadModal();
+  } catch (error) {
+    window.alert(`Unable to load demo JSON: ${error.message}`);
+  }
+});
+
+loadModalDemoActions.append(loadDemoBackButton, loadDemoConfirmButton);
+loadModalDemoView.append(loadModalDemoHint, loadModalDemoSelect, loadModalDemoActions);
+
+loadModal.append(loadModalHeader, loadModalSourceView, loadModalDemoView);
+loadModalOverlay.appendChild(loadModal);
+
+loadModalOverlay.addEventListener("click", (event) => {
+  if (event.target === loadModalOverlay) {
+    closeLoadModal();
   }
 });
 
@@ -2441,7 +2591,14 @@ window.addEventListener("contextmenu", (event) => {
   event.preventDefault();
 }, true);
 
-document.body.append(leftDock, rightDock, viewGizmo, importInput, exportSelectionOverlay);
+document.body.append(
+  leftDock,
+  rightDock,
+  viewGizmo,
+  importInput,
+  loadModalOverlay,
+  exportSelectionOverlay
+);
 
 preview = new ElementPreview(previewViewport);
 openCreateInspector(ELEMENT_TYPES.tensor, editor);
@@ -2450,6 +2607,11 @@ setExportSelectionMode(false);
 app.start();
 
 window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && loadModalOverlay && !loadModalOverlay.hidden) {
+    closeLoadModal();
+    return;
+  }
+
   if (event.key === "Escape" && uiState.exportSelectionMode) {
     setExportSelectionMode(false);
     return;

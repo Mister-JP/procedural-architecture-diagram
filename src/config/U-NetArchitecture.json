@@ -1,0 +1,4784 @@
+{
+  "version": 1,
+  "scene": {
+    "background": "#ffffff",
+    "cameraPosition": [
+      2290.5950822084305,
+      -928.682856157682,
+      7444.97596746297
+    ],
+    "cameraTarget": [
+      3083.189004066671,
+      -621.4906617930662,
+      -1483.3654846397121
+    ]
+  },
+  "elements": [
+    {
+      "id": "tensor-b5574b84",
+      "type": "tensor",
+      "name": "Input",
+      "transform": {
+        "position": [
+          -210.2549326319093,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 23,
+          "height": 128,
+          "width": 128
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#78ff75",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              125,
+              125
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-b5574b84",
+      "type": "label",
+      "name": "Input Dim",
+      "transform": {
+        "position": [
+          -284.80726693113456,
+          -158,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "23×128×128",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 38
+      }
+    },
+    {
+      "id": "tensor-272ae963",
+      "type": "tensor",
+      "name": "Enc1_Conv1",
+      "transform": {
+        "position": [
+          -25.807291666666657,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 32,
+          "height": 128,
+          "width": 128
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-b5574b84",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              125,
+              125
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-272ae963",
+      "type": "label",
+      "name": "Enc1_Conv1 Dim",
+      "transform": {
+        "position": [
+          -58.69447408397241,
+          -158,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "32×128×128",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 38
+      }
+    },
+    {
+      "id": "tensor-41a5db4a",
+      "type": "tensor",
+      "name": "Enc1_Conv2",
+      "transform": {
+        "position": [
+          171.4,
+          0,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 32,
+          "height": 128,
+          "width": 128
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-272ae963",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              125,
+              125
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-41a5db4a",
+      "type": "label",
+      "name": "Enc1_Conv2 Dim",
+      "transform": {
+        "position": [
+          171.4,
+          -158,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "32×128×128",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 38
+      }
+    },
+    {
+      "id": "arrow-29807f3d",
+      "type": "arrow",
+      "name": "Downsample 1→2",
+      "transform": {
+        "position": [
+          171.4,
+          -195.9999997138977,
+          -12
+        ],
+        "rotation": [
+          0,
+          0,
+          -1.5707963267948966
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 80,
+        "thickness": 8.4,
+        "headLength": 21.9,
+        "headWidth": 14.5,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "label-ccb87397",
+      "type": "label",
+      "name": "Downsample Label",
+      "transform": {
+        "position": [
+          385.35852272727277,
+          -199.43134473952233,
+          -12
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "2 Strided 3×3 Conv, Leaky ReLU",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 35
+      }
+    },
+    {
+      "id": "tensor-a33d47a4",
+      "type": "tensor",
+      "name": "Enc2_Conv1",
+      "transform": {
+        "position": [
+          171.4,
+          -312,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 64,
+          "height": 64,
+          "width": 64
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              61,
+              61
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-a33d47a4",
+      "type": "label",
+      "name": "Enc2_Conv1 Dim",
+      "transform": {
+        "position": [
+          171.4,
+          -406,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "64×64×64",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-46d5744c",
+      "type": "tensor",
+      "name": "Enc2_Conv2",
+      "transform": {
+        "position": [
+          288.2,
+          -312,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 64,
+          "height": 64,
+          "width": 64
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-a33d47a4",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              61,
+              61
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-46d5744c",
+      "type": "label",
+      "name": "Enc2_Conv2 Dim",
+      "transform": {
+        "position": [
+          288.2,
+          -406,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "64×64×64",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-de757660",
+      "type": "tensor",
+      "name": "Enc2_Conv3",
+      "transform": {
+        "position": [
+          405,
+          -312,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 64,
+          "height": 64,
+          "width": 64
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-46d5744c",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              61,
+              61
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-de757660",
+      "type": "label",
+      "name": "Enc2_Conv3 Dim",
+      "transform": {
+        "position": [
+          405,
+          -406,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "64×64×64",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-d00d4430",
+      "type": "arrow",
+      "name": "Downsample 2→3",
+      "transform": {
+        "position": [
+          405,
+          -420,
+          -12
+        ],
+        "rotation": [
+          0,
+          0,
+          -1.5707963267948966
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 80,
+        "thickness": 8.4,
+        "headLength": 21.9,
+        "headWidth": 14.5,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "tensor-7b77a265",
+      "type": "tensor",
+      "name": "Enc3_Conv1",
+      "transform": {
+        "position": [
+          405,
+          -528,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 128,
+          "height": 32,
+          "width": 32
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              29,
+              29
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-7b77a265",
+      "type": "label",
+      "name": "Enc3_Conv1 Dim",
+      "transform": {
+        "position": [
+          405,
+          -590,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "128×32×32",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-462229c5",
+      "type": "tensor",
+      "name": "Enc3_Conv2",
+      "transform": {
+        "position": [
+          598.6,
+          -528,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 128,
+          "height": 32,
+          "width": 32
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-7b77a265",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              29,
+              29
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-462229c5",
+      "type": "label",
+      "name": "Enc3_Conv2 Dim",
+      "transform": {
+        "position": [
+          598.6,
+          -590,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "128×32×32",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-55bd5a4f",
+      "type": "tensor",
+      "name": "Enc3_Conv3",
+      "transform": {
+        "position": [
+          792.2,
+          -528,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 128,
+          "height": 32,
+          "width": 32
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-462229c5",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              29,
+              29
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-55bd5a4f",
+      "type": "label",
+      "name": "Enc3_Conv3 Dim",
+      "transform": {
+        "position": [
+          792.2,
+          -590,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "128×32×32",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-b24b811e",
+      "type": "arrow",
+      "name": "Downsample 3→4",
+      "transform": {
+        "position": [
+          792.2,
+          -612,
+          -12
+        ],
+        "rotation": [
+          0,
+          0,
+          -1.5707963267948966
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 80,
+        "thickness": 8.4,
+        "headLength": 21.9,
+        "headWidth": 14.5,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "tensor-46ccc612",
+      "type": "tensor",
+      "name": "Enc4_Conv1",
+      "transform": {
+        "position": [
+          792.2,
+          -696,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 256,
+          "height": 16,
+          "width": 16
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              13,
+              13
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-46ccc612",
+      "type": "label",
+      "name": "Enc4_Conv1 Dim",
+      "transform": {
+        "position": [
+          792.2,
+          -742,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "256×16×16",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-f24d1e1b",
+      "type": "tensor",
+      "name": "Enc4_Conv2",
+      "transform": {
+        "position": [
+          1139.4,
+          -696,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 256,
+          "height": 16,
+          "width": 16
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-46ccc612",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              13,
+              13
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-f24d1e1b",
+      "type": "label",
+      "name": "Enc4_Conv2 Dim",
+      "transform": {
+        "position": [
+          1139.4,
+          -742,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "256×16×16",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-fed95b30",
+      "type": "tensor",
+      "name": "Enc4_Conv3",
+      "transform": {
+        "position": [
+          1486.6000000000001,
+          -696,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 256,
+          "height": 16,
+          "width": 16
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-f24d1e1b",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              13,
+              13
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-fed95b30",
+      "type": "label",
+      "name": "Enc4_Conv3 Dim",
+      "transform": {
+        "position": [
+          1486.6000000000001,
+          -742,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "256×16×16",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-1400a8b5",
+      "type": "arrow",
+      "name": "Downsample 4→B",
+      "transform": {
+        "position": [
+          1486.6000000000001,
+          -768,
+          -12
+        ],
+        "rotation": [
+          0,
+          0,
+          -1.5707963267948966
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 80,
+        "thickness": 8.4,
+        "headLength": 21.9,
+        "headWidth": 14.5,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "tensor-6a875227",
+      "type": "tensor",
+      "name": "Bottleneck_1",
+      "transform": {
+        "position": [
+          1486.6000000000001,
+          -840,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 512,
+          "height": 8,
+          "width": 8
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              5,
+              5
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-bn1",
+      "type": "label",
+      "name": "Bottleneck_1 Dim",
+      "transform": {
+        "position": [
+          1486.6000000000001,
+          -878,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "512×8×8",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-9329f8f9",
+      "type": "tensor",
+      "name": "Bottleneck_2",
+      "transform": {
+        "position": [
+          2161,
+          -840,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 512,
+          "height": 8,
+          "width": 8
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-6a875227",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 7,
+            "width": 7,
+            "channels": null,
+            "offset": [
+              0,
+              1,
+              1
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-bn2",
+      "type": "label",
+      "name": "Bottleneck_2 Dim",
+      "transform": {
+        "position": [
+          2052.4989821075246,
+          -864,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "512×8×8",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-6e7c4bcf",
+      "type": "arrow",
+      "name": "SE Squeeze Arrow",
+      "transform": {
+        "position": [
+          2161,
+          -908,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          -1.5707963267948966
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 60,
+        "thickness": 3,
+        "headLength": 12,
+        "headWidth": 6,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "tensor-3c85d4c0",
+      "type": "tensor",
+      "name": "SE_Pool",
+      "transform": {
+        "position": [
+          2161,
+          -948,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 512,
+          "height": 1,
+          "width": 1
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 1,
+            "width": 1,
+            "channels": null,
+            "offset": [
+              0,
+              0,
+              0
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-se-pool",
+      "type": "label",
+      "name": "SE_Pool Dim",
+      "transform": {
+        "position": [
+          2161,
+          -969,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "512×1×1",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "label-c2a41727",
+      "type": "label",
+      "name": "Global Average Pool",
+      "transform": {
+        "position": [
+          2240.59375,
+          -907,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "Global Avg Pool",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 30
+      }
+    },
+    {
+      "id": "tensor-ae409db4",
+      "type": "tensor",
+      "name": "SE_FC1",
+      "transform": {
+        "position": [
+          2585,
+          -987,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 128,
+          "height": 1,
+          "width": 1
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-3c85d4c0",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 1,
+            "width": 1,
+            "channels": null,
+            "offset": [
+              0,
+              0,
+              0
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-se-fc1",
+      "type": "label",
+      "name": "SE_FC1 Dim",
+      "transform": {
+        "position": [
+          2585,
+          -969,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "128×1×1",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "label-592ba63f",
+      "type": "label",
+      "name": "Leaky ReLU",
+      "transform": {
+        "position": [
+          2483.488779758476,
+          -922,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "Leaky ReLU",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-525834fd",
+      "type": "tensor",
+      "name": "SE_FC2",
+      "transform": {
+        "position": [
+          3009,
+          -1028,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 512,
+          "height": 1,
+          "width": 1
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-ae409db4",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 1,
+            "width": 1,
+            "channels": null,
+            "offset": [
+              0,
+              0,
+              0
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-se-fc2",
+      "type": "label",
+      "name": "SE_FC2 Dim",
+      "transform": {
+        "position": [
+          3009,
+          -1049,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "512×1×1",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-c762151b",
+      "type": "arrow",
+      "name": "SE Sigmoid Arrow",
+      "transform": {
+        "position": [
+          3009,
+          -988,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          1.5707963267948966
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 50,
+        "thickness": 1,
+        "headLength": 5,
+        "headWidth": 2.5,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "label-c7b52e15",
+      "type": "label",
+      "name": "Sigmoid",
+      "transform": {
+        "position": [
+          2962.3226147921405,
+          -990,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "Sigmoid",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-9e53452e",
+      "type": "tensor",
+      "name": "SE_Sigmoid",
+      "transform": {
+        "position": [
+          3009,
+          -948,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 512,
+          "height": 1,
+          "width": 1
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 1,
+            "width": 1,
+            "channels": null,
+            "offset": [
+              0,
+              0,
+              0
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-se-sig",
+      "type": "label",
+      "name": "SE_Sigmoid Dim",
+      "transform": {
+        "position": [
+          3081.6413478279937,
+          -969,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "512×1×1",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-c983c288",
+      "type": "arrow",
+      "name": "SE Broadcast Arrow",
+      "transform": {
+        "position": [
+          3009,
+          -908,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          1.5707963267948966
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 60,
+        "thickness": 1,
+        "headLength": 5,
+        "headWidth": 2.5,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "label-ddc377bc",
+      "type": "label",
+      "name": "Broadcast",
+      "transform": {
+        "position": [
+          2910.9570227387817,
+          -907,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "Broadcast × Multiply",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-19e2a1f3",
+      "type": "tensor",
+      "name": "SE_Scale",
+      "transform": {
+        "position": [
+          3009,
+          -840,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 512,
+          "height": 8,
+          "width": 8
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 1,
+            "width": 1,
+            "channels": null,
+            "offset": [
+              0,
+              0,
+              0
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-se-scale",
+      "type": "label",
+      "name": "SE_Scale Dim",
+      "transform": {
+        "position": [
+          3075.665116154017,
+          -867.7469298612887,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "512×8×8",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-7119d9a7",
+      "type": "arrow",
+      "name": "SE Skip",
+      "transform": {
+        "position": [
+          2580.470141622563,
+          -840,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "arrowType": "dotted",
+        "length": 213.60000000000036,
+        "thickness": 1.4,
+        "headLength": 7,
+        "headWidth": 4,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "tensor-023d0c08",
+      "type": "tensor",
+      "name": "Expand",
+      "transform": {
+        "position": [
+          4931.081671634722,
+          -840,
+          1.5107569463752952
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 2048,
+          "height": 8,
+          "width": 8
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-19e2a1f3",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 1,
+            "width": 1,
+            "channels": null,
+            "offset": [
+              0,
+              6.95,
+              6.95
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-cbd9aa99",
+      "type": "label",
+      "name": "GeLU",
+      "transform": {
+        "position": [
+          3354.6302683638546,
+          -810.8253302484545,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "GeLU",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 30
+      }
+    },
+    {
+      "id": "tensor-4d966f4f",
+      "type": "tensor",
+      "name": "Project",
+      "transform": {
+        "position": [
+          6965.559659381646,
+          -840,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 512,
+          "height": 8,
+          "width": 8
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-023d0c08",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 1,
+            "width": 1,
+            "channels": null,
+            "offset": [
+              0,
+              6.95,
+              6.949999999999999
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-project",
+      "type": "label",
+      "name": "Project Dim",
+      "transform": {
+        "position": [
+          6969.3700482280265,
+          -878,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "512×8×8",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-184aac8b",
+      "type": "arrow",
+      "name": "Upsample_4",
+      "transform": {
+        "position": [
+          6955.270047846557,
+          -768,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          1.5707963267948966
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 80,
+        "thickness": 6.7,
+        "headLength": 23.5,
+        "headWidth": 14.1,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "label-56559a81",
+      "type": "label",
+      "name": "Transposed Conv 4",
+      "transform": {
+        "position": [
+          7209.570881229624,
+          -781.0836360276917,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "3x3 Transposed Conv, 2 Strided, Leaky ReLu",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 35
+      }
+    },
+    {
+      "id": "label-dim-cfbb5da1",
+      "type": "label",
+      "name": "Dec4_Skip Dim",
+      "transform": {
+        "position": [
+          6721.8,
+          -742,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "256×16×16",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-52fc577b",
+      "type": "tensor",
+      "name": "Dec4_Conv1",
+      "transform": {
+        "position": [
+          6914.202326766332,
+          -696,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 512,
+          "height": 16,
+          "width": 16
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": [
+            {
+              "minChannel": 1,
+              "maxChannel": 256,
+              "color": "#2e6cff"
+            }
+          ]
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-cfbb5da1",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              13,
+              13
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-52fc577b",
+      "type": "label",
+      "name": "Dec4_Conv1 Dim",
+      "transform": {
+        "position": [
+          7069,
+          -742,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "256×16×16",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-16977d34",
+      "type": "tensor",
+      "name": "Dec4_Conv2",
+      "transform": {
+        "position": [
+          7416.2,
+          -696,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 256,
+          "height": 16,
+          "width": 16
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-52fc577b",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              13,
+              13
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-16977d34",
+      "type": "label",
+      "name": "Dec4_Conv2 Dim",
+      "transform": {
+        "position": [
+          7416.2,
+          -742,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "256×16×16",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-7779f4c9",
+      "type": "tensor",
+      "name": "Dec4_Conv3",
+      "transform": {
+        "position": [
+          7763.4,
+          -696,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 256,
+          "height": 16,
+          "width": 16
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-16977d34",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              13,
+              13
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-7779f4c9",
+      "type": "label",
+      "name": "Dec4_Conv3 Dim",
+      "transform": {
+        "position": [
+          7763.4,
+          -742,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "256×16×16",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-6b2508bf",
+      "type": "arrow",
+      "name": "Upsample_3",
+      "transform": {
+        "position": [
+          7763.4,
+          -612,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          1.5707963267948966
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 80,
+        "thickness": 6.7,
+        "headLength": 23.5,
+        "headWidth": 14.1,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "label-dim-39b80a44",
+      "type": "label",
+      "name": "Dec3_Skip Dim",
+      "transform": {
+        "position": [
+          7682.7176402108535,
+          -590,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "256×32×32",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-ceaa65ca",
+      "type": "tensor",
+      "name": "Dec3_Conv1",
+      "transform": {
+        "position": [
+          7698.480538855314,
+          -528,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 256,
+          "height": 32,
+          "width": 32
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": [
+            {
+              "minChannel": 1,
+              "maxChannel": 128,
+              "color": "#2e6cff"
+            }
+          ]
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-39b80a44",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              29,
+              29
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "tensor-8176e590",
+      "type": "tensor",
+      "name": "Dec3_Conv2",
+      "transform": {
+        "position": [
+          7969.940682328344,
+          -528,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 128,
+          "height": 32,
+          "width": 32
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-ceaa65ca",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              29,
+              29
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-8176e590",
+      "type": "label",
+      "name": "Dec3_Conv2 Dim",
+      "transform": {
+        "position": [
+          7972.449472935218,
+          -590,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "128×32×32",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-08cfedb5",
+      "type": "tensor",
+      "name": "Dec3_Conv3",
+      "transform": {
+        "position": [
+          8163.540682328345,
+          -528,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 128,
+          "height": 32,
+          "width": 32
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-8176e590",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              29,
+              29
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-08cfedb5",
+      "type": "label",
+      "name": "Dec3_Conv3 Dim",
+      "transform": {
+        "position": [
+          8171.080969553446,
+          -590,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "128×32×32",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-57850052",
+      "type": "arrow",
+      "name": "Upsample_2",
+      "transform": {
+        "position": [
+          8171.080969553446,
+          -442.57233976001635,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          1.5707963267948966
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 80,
+        "thickness": 6.7,
+        "headLength": 23.5,
+        "headWidth": 14.1,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "tensor-bd47a522",
+      "type": "tensor",
+      "name": "Dec2_Conv1",
+      "transform": {
+        "position": [
+          8130.861546831844,
+          -312,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 128,
+          "height": 64,
+          "width": 64
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": [
+            {
+              "minChannel": 1,
+              "maxChannel": 64,
+              "color": "#2e6cff"
+            }
+          ]
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-cab3f81d",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              61,
+              61
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-bd47a522",
+      "type": "label",
+      "name": "Dec2_Conv1 Dim",
+      "transform": {
+        "position": [
+          8142.155350981477,
+          -399.0117373236033,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "128×64×64",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-0ef9e66a",
+      "type": "tensor",
+      "name": "Dec2_Conv2",
+      "transform": {
+        "position": [
+          8298.768945929054,
+          -312,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 64,
+          "height": 64,
+          "width": 64
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-bd47a522",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              61,
+              61
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-0ef9e66a",
+      "type": "label",
+      "name": "Dec2_Conv2 Dim",
+      "transform": {
+        "position": [
+          8298.768945929054,
+          -406,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "64×64×64",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-adee9619",
+      "type": "tensor",
+      "name": "Dec2_Conv3",
+      "transform": {
+        "position": [
+          8443.68200679392,
+          -312,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 64,
+          "height": 64,
+          "width": 64
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-0ef9e66a",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              61,
+              61
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-adee9619",
+      "type": "label",
+      "name": "Dec2_Conv3 Dim",
+      "transform": {
+        "position": [
+          8443.68200679392,
+          -406.0000002861023,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "64×64×64",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-f09ca1eb",
+      "type": "arrow",
+      "name": "Upsample_1",
+      "transform": {
+        "position": [
+          8445.384024683115,
+          -156,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          1.5707963267948966
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 80,
+        "thickness": 6.7,
+        "headLength": 23.5,
+        "headWidth": 14.1,
+        "color": "#000000",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "tensor-2e25f93f",
+      "type": "tensor",
+      "name": "Dec1_Conv1",
+      "transform": {
+        "position": [
+          8439.723186163477,
+          25.323085782031967,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 64,
+          "height": 128,
+          "width": 128
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": [
+            {
+              "minChannel": 1,
+              "maxChannel": 32,
+              "color": "#2e6cff"
+            }
+          ]
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-623f096d",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              125,
+              125
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-2e25f93f",
+      "type": "label",
+      "name": "Dec1_Conv1 Dim",
+      "transform": {
+        "position": [
+          8427.352866633368,
+          -142.60825895749036,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "64×128×128",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-03f7b8f0",
+      "type": "tensor",
+      "name": "Dec1_Conv2",
+      "transform": {
+        "position": [
+          8583.664252538956,
+          25.323085782031967,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 32,
+          "height": 128,
+          "width": 128
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-2e25f93f",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              125,
+              125
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-03f7b8f0",
+      "type": "label",
+      "name": "Dec1_Conv2 Dim",
+      "transform": {
+        "position": [
+          8564.464251776017,
+          -132.67691421796803,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "32×128×128",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-0ddf27e5",
+      "type": "tensor",
+      "name": "Dec1_Conv3",
+      "transform": {
+        "position": [
+          8734.781648644981,
+          25.323085782031967,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 32,
+          "height": 128,
+          "width": 128
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#ff7676",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-03f7b8f0",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              125,
+              125
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-0ddf27e5",
+      "type": "label",
+      "name": "Dec1_Conv3 Dim",
+      "transform": {
+        "position": [
+          8711.788369437389,
+          -132.67691421796803,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "32×128×128",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "tensor-2b454768",
+      "type": "tensor",
+      "name": "Output",
+      "transform": {
+        "position": [
+          8868.06077963314,
+          25.323085782031967,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "dimensions": {
+          "channels": 6,
+          "height": 128,
+          "width": 128
+        },
+        "scale": {
+          "channel": 1.2,
+          "height": 2,
+          "width": 2
+        },
+        "style": {
+          "startColor": "#fff475",
+          "endColor": "#4a0606",
+          "fillOpacity": 0.42,
+          "borderColor": "#111111",
+          "borderOpacity": 0.44,
+          "channelColorRanges": []
+        },
+        "labels": {
+          "enabled": false,
+          "textColor": "#0f172a",
+          "textOpacity": 0.95,
+          "backgroundColor": "#ffffff",
+          "backgroundOpacity": 0.78,
+          "borderColor": "#334155",
+          "borderOpacity": 0.35,
+          "scaleHeight": 2.8
+        },
+        "convolution": {
+          "parentTensorId": "tensor-0ddf27e5",
+          "targetTensorId": "",
+          "branchOrder": 0,
+          "layout": {
+            "branchSpacing": 1,
+            "branchOffset": [
+              0,
+              0,
+              0
+            ]
+          },
+          "kernel": {
+            "height": 3,
+            "width": 3,
+            "channels": null,
+            "offset": [
+              0,
+              125,
+              125
+            ],
+            "color": "#3b82f6",
+            "opacity": 0.82,
+            "borderColor": "#0f172a",
+            "borderOpacity": 0.68,
+            "labelScaleHeight": 2.4
+          },
+          "pyramid": {
+            "color": "#60a5fa",
+            "opacity": 0.24,
+            "borderColor": "#1d4ed8",
+            "borderOpacity": 0.45,
+            "spread": 1.65
+          }
+        }
+      }
+    },
+    {
+      "id": "label-dim-2b454768",
+      "type": "label",
+      "name": "Output Dim",
+      "transform": {
+        "position": [
+          8877.537881543783,
+          -132.67691421796803,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "6×128×128",
+        "fontFamily": "Arial",
+        "fontSize": 42,
+        "textColor": "#b0bec5",
+        "textOpacity": 1,
+        "backgroundColor": "#1a1a2e",
+        "backgroundOpacity": 0.75,
+        "borderColor": "#546e7a",
+        "borderOpacity": 0.6,
+        "borderWidth": 3,
+        "padding": 12,
+        "scaleHeight": 28
+      }
+    },
+    {
+      "id": "arrow-74b47158",
+      "type": "arrow",
+      "name": "Skip Connection 4",
+      "transform": {
+        "position": [
+          4138.548478874661,
+          -696,
+          10
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 4908,
+        "thickness": 17.1,
+        "headLength": 100,
+        "headWidth": 35,
+        "color": "#9cd8ff",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "arrow-63d31454",
+      "type": "arrow",
+      "name": "Skip Connection 3",
+      "transform": {
+        "position": [
+          4169.341138829668,
+          -528,
+          10
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 6487.999999999999,
+        "thickness": 17.1,
+        "headLength": 100,
+        "headWidth": 35,
+        "color": "#9cd8ff",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "arrow-56ac615c",
+      "type": "arrow",
+      "name": "Skip Connection 2",
+      "transform": {
+        "position": [
+          4268.449472935217,
+          -312,
+          10
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 7408.000000000002,
+        "thickness": 17.1,
+        "headLength": 100,
+        "headWidth": 35,
+        "color": "#9cd8ff",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "arrow-0f19a027",
+      "type": "arrow",
+      "name": "Skip Connection 1",
+      "transform": {
+        "position": [
+          4327.995046929541,
+          0,
+          10
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "arrowType": "3d",
+        "length": 8047.999999999998,
+        "thickness": 17.1,
+        "headLength": 100,
+        "headWidth": 35,
+        "color": "#9cd8ff",
+        "opacity": 1,
+        "dashSize": 2.5,
+        "gapSize": 1.3,
+        "controlPoint": [
+          0,
+          12,
+          0
+        ]
+      }
+    },
+    {
+      "id": "label-a4b65ab4",
+      "type": "label",
+      "name": "Skip Connections",
+      "transform": {
+        "position": [
+          4024.239231907399,
+          -142.67691421796803,
+          -16
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "Skip Connections",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 80
+      }
+    },
+    {
+      "id": "label-5fea8cff",
+      "type": "label",
+      "name": "Linear expansion",
+      "transform": {
+        "position": [
+          2714.598230873986,
+          -998,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "Linear",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 30
+      }
+    },
+    {
+      "id": "label-3747a20b",
+      "type": "label",
+      "name": "Linear expansion Copy",
+      "transform": {
+        "position": [
+          6365.201865999669,
+          -805.8456488466265,
+          -1
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "Linear",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 30
+      }
+    },
+    {
+      "id": "label-912730f1",
+      "type": "label",
+      "name": "Leaky ReLU Label Copy",
+      "transform": {
+        "position": [
+          -127.96926070921705,
+          152.53698763407556,
+          0
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "Leaky ReLU",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 35
+      }
+    },
+    {
+      "id": "label-9ade60e1",
+      "type": "label",
+      "name": "Label",
+      "transform": {
+        "position": [
+          3995.49504692954,
+          560.9518973768313,
+          -16
+        ],
+        "rotation": [
+          0,
+          0,
+          0
+        ]
+      },
+      "data": {
+        "text": "U Net Architecture",
+        "fontFamily": "Arial",
+        "fontSize": 56,
+        "textColor": "#e7f4ff",
+        "textOpacity": 1,
+        "backgroundColor": "#0f1624",
+        "backgroundOpacity": 0.86,
+        "borderColor": "#9cd8ff",
+        "borderOpacity": 1,
+        "borderWidth": 5,
+        "padding": 20,
+        "scaleHeight": 120
+      }
+    }
+  ]
+}
