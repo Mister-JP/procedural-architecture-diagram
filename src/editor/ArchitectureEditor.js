@@ -1493,12 +1493,13 @@ export class ArchitectureEditor {
     quality = 0.92,
     width = null,
     height = null,
+    crop = null,
     tiled = undefined,
     tileSize = null,
     includeEditorOverlays = false
   } = {}) {
     if (includeEditorOverlays) {
-      return this.app.exportRaster({ format, quality, width, height, tiled, tileSize });
+      return this.app.exportRaster({ format, quality, width, height, crop, tiled, tileSize });
     }
 
     const previousState = {
@@ -1518,7 +1519,7 @@ export class ArchitectureEditor {
     this.alignmentGuidesGroup.visible = false;
 
     try {
-      return this.app.exportRaster({ format, quality, width, height, tiled, tileSize });
+      return this.app.exportRaster({ format, quality, width, height, crop, tiled, tileSize });
     } finally {
       this.transformControlsHelper.visible = previousState.transformControlsHelperVisible;
       this.curveHandle.visible = previousState.curveHandleVisible;

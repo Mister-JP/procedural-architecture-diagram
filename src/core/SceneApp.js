@@ -174,6 +174,7 @@ export class SceneApp {
     const width = Number.isFinite(options.width) ? Math.max(1, Math.round(options.width)) : null;
     const height = Number.isFinite(options.height) ? Math.max(1, Math.round(options.height)) : null;
     const tiled = options.tiled;
+    const crop = this.normalizeExportCrop(options.crop);
     const requestedTileSize = Number.isFinite(options.tileSize)
       ? Math.max(1, Math.round(options.tileSize))
       : null;
@@ -188,6 +189,15 @@ export class SceneApp {
       }
       return this.renderer.domElement.toDataURL(mimeType);
     }
+
+    const currentViewportSize = this.renderer.getSize(new THREE.Vector2());
+    const projectionWindow = this.resolveProjectionWindow({
+      outputWidth: width,
+      outputHeight: height,
+      viewportWidth: currentViewportSize.x,
+      viewportHeight: currentViewportSize.y,
+      crop
+    });
 
     const maxRenderDimension = this.getMaxRenderDimension();
     const tileSize = Math.min(
@@ -216,17 +226,31 @@ export class SceneApp {
       );
 
     if (shouldUseTiledPngExport) {
-      return this.exportRasterTiledPng({ width, height, tileSize });
+      return this.exportRasterTiledPng({
+        width,
+        height,
+        tileSize,
+        projectionWindow
+      });
     }
 
     const previousSize = this.renderer.getSize(new THREE.Vector2());
     const previousPixelRatio = this.renderer.getPixelRatio();
     const previousAspect = this.camera.aspect;
+    const previousView = this.camera.view ? { ...this.camera.view } : null;
 
     try {
       this.renderer.setPixelRatio(1);
       this.renderer.setSize(width, height, false);
-      this.camera.aspect = width / height;
+      this.camera.aspect = projectionWindow.fullWidth / projectionWindow.fullHeight;
+      this.camera.setViewOffset(
+        projectionWindow.fullWidth,
+        projectionWindow.fullHeight,
+        projectionWindow.offsetX,
+        projectionWindow.offsetY,
+        projectionWindow.width,
+        projectionWindow.height
+      );
       this.camera.updateProjectionMatrix();
 
       this.controls.update();
@@ -240,9 +264,99 @@ export class SceneApp {
       this.renderer.setPixelRatio(previousPixelRatio);
       this.renderer.setSize(previousSize.x, previousSize.y, false);
       this.camera.aspect = previousAspect;
+      this.restoreCameraView(previousView);
       this.camera.updateProjectionMatrix();
       this.renderFrame();
     }
+  }
+
+  normalizeExportCrop(crop) {
+    if (!crop || typeof crop !== "object") {
+      return null;
+    }
+
+    const parsedX = Number(crop.x);
+    const parsedY = Number(crop.y);
+    const parsedWidth = Number(crop.width);
+    const parsedHeight = Number(crop.height);
+
+    if (
+      !Number.isFinite(parsedX) ||
+      !Number.isFinite(parsedY) ||
+      !Number.isFinite(parsedWidth) ||
+      !Number.isFinite(parsedHeight)
+    ) {
+      return null;
+    }
+
+    const x = THREE.MathUtils.clamp(parsedX, 0, 1);
+    const y = THREE.MathUtils.clamp(parsedY, 0, 1);
+    const width = THREE.MathUtils.clamp(parsedWidth, 0, 1 - x);
+    const height = THREE.MathUtils.clamp(parsedHeight, 0, 1 - y);
+
+    if (width <= 0 || height <= 0) {
+      return null;
+    }
+
+    return { x, y, width, height };
+  }
+
+  resolveProjectionWindow({
+    outputWidth,
+    outputHeight,
+    viewportWidth,
+    viewportHeight,
+    crop
+  }) {
+    if (!crop) {
+      return {
+        fullWidth: outputWidth,
+        fullHeight: outputHeight,
+        offsetX: 0,
+        offsetY: 0,
+        width: outputWidth,
+        height: outputHeight
+      };
+    }
+
+    const fullWidth = Math.max(1, Number.isFinite(viewportWidth) ? viewportWidth : outputWidth);
+    const fullHeight = Math.max(1, Number.isFinite(viewportHeight) ? viewportHeight : outputHeight);
+
+    const offsetX = crop.x * fullWidth;
+    const offsetY = crop.y * fullHeight;
+    const width = Math.max(1e-6, crop.width * fullWidth);
+    const height = Math.max(1e-6, crop.height * fullHeight);
+
+    return {
+      fullWidth,
+      fullHeight,
+      offsetX,
+      offsetY,
+      width,
+      height
+    };
+  }
+
+  resolveProjectionWindowTile({
+    projectionWindow,
+    outputWidth,
+    outputHeight,
+    tileOffsetX,
+    tileOffsetY,
+    tileWidth,
+    tileHeight
+  }) {
+    const scaleX = projectionWindow.width / outputWidth;
+    const scaleY = projectionWindow.height / outputHeight;
+
+    return {
+      fullWidth: projectionWindow.fullWidth,
+      fullHeight: projectionWindow.fullHeight,
+      offsetX: projectionWindow.offsetX + tileOffsetX * scaleX,
+      offsetY: projectionWindow.offsetY + tileOffsetY * scaleY,
+      width: Math.max(1e-6, tileWidth * scaleX),
+      height: Math.max(1e-6, tileHeight * scaleY)
+    };
   }
 
   getMaxRenderDimension() {
@@ -288,7 +402,7 @@ export class SceneApp {
     );
   }
 
-  exportRasterTiledPng({ width, height, tileSize }) {
+  exportRasterTiledPng({ width, height, tileSize, projectionWindow }) {
     const previousSize = this.renderer.getSize(new THREE.Vector2());
     const previousPixelRatio = this.renderer.getPixelRatio();
     const previousAspect = this.camera.aspect;
@@ -311,7 +425,7 @@ export class SceneApp {
 
     try {
       this.renderer.setPixelRatio(1);
-      this.camera.aspect = width / height;
+      this.camera.aspect = projectionWindow.fullWidth / projectionWindow.fullHeight;
       this.camera.updateProjectionMatrix();
 
       this.controls.update();
@@ -322,15 +436,24 @@ export class SceneApp {
 
         for (let xOffset = 0; xOffset < width; xOffset += tileSize) {
           const tileWidth = Math.min(tileSize, width - xOffset);
+          const tileProjectionWindow = this.resolveProjectionWindowTile({
+            projectionWindow,
+            outputWidth: width,
+            outputHeight: height,
+            tileOffsetX: xOffset,
+            tileOffsetY: yOffset,
+            tileWidth,
+            tileHeight
+          });
 
           this.renderer.setSize(tileWidth, tileHeight, false);
           this.camera.setViewOffset(
-            width,
-            height,
-            xOffset,
-            yOffset,
-            tileWidth,
-            tileHeight
+            tileProjectionWindow.fullWidth,
+            tileProjectionWindow.fullHeight,
+            tileProjectionWindow.offsetX,
+            tileProjectionWindow.offsetY,
+            tileProjectionWindow.width,
+            tileProjectionWindow.height
           );
 
           this.renderer.render(this.scene, this.camera);

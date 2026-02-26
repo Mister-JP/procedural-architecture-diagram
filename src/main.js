@@ -118,6 +118,185 @@ function isEditableDomTarget(target) {
   return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT";
 }
 
+function clamp01(value) {
+  return Math.min(1, Math.max(0, value));
+}
+
+function normalizeExportCrop(crop) {
+  if (!crop || typeof crop !== "object") {
+    return null;
+  }
+
+  const parsedX = Number(crop.x);
+  const parsedY = Number(crop.y);
+  const parsedWidth = Number(crop.width);
+  const parsedHeight = Number(crop.height);
+
+  if (
+    !Number.isFinite(parsedX) ||
+    !Number.isFinite(parsedY) ||
+    !Number.isFinite(parsedWidth) ||
+    !Number.isFinite(parsedHeight)
+  ) {
+    return null;
+  }
+
+  const x = clamp01(parsedX);
+  const y = clamp01(parsedY);
+  const width = Math.min(1 - x, Math.max(0, parsedWidth));
+  const height = Math.min(1 - y, Math.max(0, parsedHeight));
+
+  if (width <= 0 || height <= 0) {
+    return null;
+  }
+
+  return { x, y, width, height };
+}
+
+function getCanvasViewportRect() {
+  return app.renderer.domElement.getBoundingClientRect();
+}
+
+function resolveAspectLockedSelectionRect({
+  startX,
+  startY,
+  currentX,
+  currentY,
+  bounds,
+  aspect
+}) {
+  const safeAspect = Number.isFinite(aspect) && aspect > 0 ? aspect : 1;
+  const dx = currentX - startX;
+  const dy = currentY - startY;
+  const signX = dx >= 0 ? 1 : -1;
+  const signY = dy >= 0 ? 1 : -1;
+
+  let width = Math.abs(dx);
+  let height = Math.abs(dy);
+
+  if (width <= 0 && height <= 0) {
+    width = 1;
+    height = 1 / safeAspect;
+  } else if (width / Math.max(height, 1e-6) > safeAspect) {
+    height = width / safeAspect;
+  } else {
+    width = height * safeAspect;
+  }
+
+  const maxWidth = signX > 0 ? bounds.right - startX : startX - bounds.left;
+  const maxHeight = signY > 0 ? bounds.bottom - startY : startY - bounds.top;
+  const scale = Math.min(1, maxWidth / Math.max(width, 1e-6), maxHeight / Math.max(height, 1e-6));
+
+  width *= scale;
+  height *= scale;
+
+  const x = signX > 0 ? startX : startX - width;
+  const y = signY > 0 ? startY : startY - height;
+
+  return { x, y, width, height };
+}
+
+function drawExportSelectionBox(rect) {
+  if (!exportSelectionBox) {
+    return;
+  }
+
+  if (!rect || rect.width <= 0 || rect.height <= 0) {
+    exportSelectionBox.hidden = true;
+    return;
+  }
+
+  exportSelectionBox.hidden = false;
+  exportSelectionBox.style.left = `${rect.x}px`;
+  exportSelectionBox.style.top = `${rect.y}px`;
+  exportSelectionBox.style.width = `${rect.width}px`;
+  exportSelectionBox.style.height = `${rect.height}px`;
+}
+
+function updateExportSelectionVisuals() {
+  if (!exportSelectionOverlay) {
+    return;
+  }
+
+  exportSelectionOverlay.classList.toggle("active", uiState.exportSelectionMode);
+  if (exportSelectionHint) {
+    exportSelectionHint.hidden = !uiState.exportSelectionMode;
+  }
+
+  if (exportSelectionDragState?.previewRect) {
+    drawExportSelectionBox(exportSelectionDragState.previewRect);
+    return;
+  }
+
+  const rect = getCanvasViewportRect();
+  const crop = uiState.exportCrop;
+
+  if (!crop) {
+    drawExportSelectionBox(null);
+    return;
+  }
+
+  drawExportSelectionBox({
+    x: rect.left + crop.x * rect.width,
+    y: rect.top + crop.y * rect.height,
+    width: crop.width * rect.width,
+    height: crop.height * rect.height
+  });
+}
+
+function updateExportRegionUi() {
+  if (!exportRegionStatus) {
+    return;
+  }
+
+  if (uiState.exportCrop) {
+    const widthPercent = Math.round(uiState.exportCrop.width * 100);
+    const heightPercent = Math.round(uiState.exportCrop.height * 100);
+    const cropAspect = uiState.exportCrop.width / Math.max(1e-6, uiState.exportCrop.height);
+    const exportAspect = uiState.exportResolution.width / Math.max(1, uiState.exportResolution.height);
+    const aspectDelta = Math.abs(cropAspect - exportAspect) / Math.max(cropAspect, exportAspect, 1e-6);
+    exportRegionStatus.textContent =
+      aspectDelta > 0.02
+        ? `Selected (${widthPercent}% x ${heightPercent}%) - reselect after aspect change`
+        : `Selected (${widthPercent}% x ${heightPercent}%)`;
+  } else {
+    exportRegionStatus.textContent = "Full camera view";
+  }
+
+  if (selectExportRegionButton) {
+    selectExportRegionButton.classList.toggle("active", uiState.exportSelectionMode);
+    selectExportRegionButton.textContent = uiState.exportSelectionMode
+      ? "Cancel Select"
+      : "Select Region";
+  }
+
+  if (clearExportRegionButton) {
+    clearExportRegionButton.disabled = !uiState.exportCrop;
+  }
+}
+
+function setExportCrop(crop) {
+  uiState.exportCrop = normalizeExportCrop(crop);
+  updateExportRegionUi();
+  updateExportSelectionVisuals();
+}
+
+function setExportSelectionMode(enabled) {
+  uiState.exportSelectionMode = Boolean(enabled);
+  if (!uiState.exportSelectionMode && exportSelectionDragState) {
+    if (
+      exportSelectionOverlay &&
+      Number.isFinite(exportSelectionDragState.pointerId) &&
+      exportSelectionOverlay.hasPointerCapture(exportSelectionDragState.pointerId)
+    ) {
+      exportSelectionOverlay.releasePointerCapture(exportSelectionDragState.pointerId);
+    }
+    exportSelectionDragState = null;
+  }
+  updateExportRegionUi();
+  updateExportSelectionVisuals();
+}
+
 const startingDocument = normalizeDocument(defaultArchitectureDocument);
 const initialCameraPosition = startingDocument.scene.cameraPosition;
 
@@ -146,7 +325,9 @@ const uiState = {
   kernelHandleEnabled: false,
   kernelHandleTargetSourceId: null,
   latestDocument: clone(startingDocument),
-  exportResolution: initialExportResolution
+  exportResolution: initialExportResolution,
+  exportCrop: null,
+  exportSelectionMode: false
 };
 
 let duplicateButton;
@@ -166,6 +347,13 @@ let importInput;
 let backgroundInput;
 let viewModeStatus;
 let viewPlaneButtons = {};
+let exportRegionStatus;
+let selectExportRegionButton;
+let clearExportRegionButton;
+let exportSelectionOverlay;
+let exportSelectionBox;
+let exportSelectionHint;
+let exportSelectionDragState = null;
 
 function applyTransformModeButtonState(mode) {
   const isMove = mode === "translate";
@@ -1691,7 +1879,37 @@ exportResolutionControls.append(
 );
 exportResolutionRow.appendChild(exportResolutionControls);
 
-sceneSection.append(sceneHeading, backgroundRow, exportResolutionRow);
+const exportRegionRow = createFieldRow("Export Region");
+const exportRegionControls = document.createElement("div");
+exportRegionControls.className = "export-region-controls";
+
+selectExportRegionButton = createButton("Select Region", {
+  className: "tool-button compact",
+  title: "Draw an export crop region on the canvas"
+});
+selectExportRegionButton.addEventListener("click", () => {
+  syncExportResolutionState();
+  setExportSelectionMode(!uiState.exportSelectionMode);
+});
+
+clearExportRegionButton = createButton("Clear", { className: "tool-button compact" });
+clearExportRegionButton.addEventListener("click", () => {
+  setExportSelectionMode(false);
+  setExportCrop(null);
+});
+
+exportRegionStatus = document.createElement("p");
+exportRegionStatus.className = "export-region-status";
+exportRegionStatus.textContent = "Full camera view";
+
+exportRegionControls.append(
+  selectExportRegionButton,
+  clearExportRegionButton,
+  exportRegionStatus
+);
+exportRegionRow.appendChild(exportRegionControls);
+
+sceneSection.append(sceneHeading, backgroundRow, exportResolutionRow, exportRegionRow);
 
 const fileActions = document.createElement("div");
 fileActions.className = "button-row";
@@ -1713,7 +1931,12 @@ exportImageButton.addEventListener("click", () => {
   try {
     syncExportResolutionState();
     const { width, height } = uiState.exportResolution;
-    const dataUrl = editor.exportImage({ format: "png", width, height });
+    const dataUrl = editor.exportImage({
+      format: "png",
+      width,
+      height,
+      crop: uiState.exportCrop ? { ...uiState.exportCrop } : null
+    });
     downloadDataUrl(dataUrl, "architecture-view.png");
   } catch (error) {
     window.alert(`Unable to export PNG: ${error.message}`);
@@ -1949,13 +2172,125 @@ viewGizmo.append(viewGizmoHeader, axisButtonRow, planeButtonRow, clearPlaneButto
 
 syncViewPlaneControls(editor);
 
-document.body.append(leftDock, rightDock, viewGizmo, importInput);
+exportSelectionOverlay = document.createElement("div");
+exportSelectionOverlay.className = "export-selection-overlay";
+
+exportSelectionBox = document.createElement("div");
+exportSelectionBox.className = "export-selection-box";
+exportSelectionBox.hidden = true;
+
+exportSelectionHint = document.createElement("p");
+exportSelectionHint.className = "export-selection-hint";
+exportSelectionHint.textContent = "Drag on canvas to choose export region (locked to export aspect ratio)";
+exportSelectionHint.hidden = true;
+
+exportSelectionOverlay.append(exportSelectionBox, exportSelectionHint);
+exportSelectionOverlay.addEventListener("pointerdown", (event) => {
+  if (!uiState.exportSelectionMode || event.button !== 0) {
+    return;
+  }
+
+  const bounds = getCanvasViewportRect();
+  if (
+    event.clientX < bounds.left ||
+    event.clientX > bounds.right ||
+    event.clientY < bounds.top ||
+    event.clientY > bounds.bottom
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const startX = Math.min(bounds.right, Math.max(bounds.left, event.clientX));
+  const startY = Math.min(bounds.bottom, Math.max(bounds.top, event.clientY));
+
+  exportSelectionDragState = {
+    pointerId: event.pointerId,
+    bounds,
+    startX,
+    startY,
+    previewRect: { x: startX, y: startY, width: 1, height: 1 }
+  };
+
+  exportSelectionOverlay.setPointerCapture(event.pointerId);
+  updateExportSelectionVisuals();
+});
+
+exportSelectionOverlay.addEventListener("pointermove", (event) => {
+  if (
+    !uiState.exportSelectionMode ||
+    !exportSelectionDragState ||
+    event.pointerId !== exportSelectionDragState.pointerId
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const bounds = exportSelectionDragState.bounds;
+  const currentX = Math.min(bounds.right, Math.max(bounds.left, event.clientX));
+  const currentY = Math.min(bounds.bottom, Math.max(bounds.top, event.clientY));
+  const aspect = uiState.exportResolution.width / Math.max(1, uiState.exportResolution.height);
+
+  exportSelectionDragState.previewRect = resolveAspectLockedSelectionRect({
+    startX: exportSelectionDragState.startX,
+    startY: exportSelectionDragState.startY,
+    currentX,
+    currentY,
+    bounds,
+    aspect
+  });
+
+  updateExportSelectionVisuals();
+});
+
+exportSelectionOverlay.addEventListener("pointerup", (event) => {
+  if (!exportSelectionDragState || event.pointerId !== exportSelectionDragState.pointerId) {
+    return;
+  }
+
+  event.preventDefault();
+
+  const dragState = exportSelectionDragState;
+  const selectedRect = dragState.previewRect;
+  setExportSelectionMode(false);
+
+  if (!selectedRect || selectedRect.width < 8 || selectedRect.height < 8) {
+    return;
+  }
+
+  setExportCrop({
+    x: (selectedRect.x - dragState.bounds.left) / dragState.bounds.width,
+    y: (selectedRect.y - dragState.bounds.top) / dragState.bounds.height,
+    width: selectedRect.width / dragState.bounds.width,
+    height: selectedRect.height / dragState.bounds.height
+  });
+});
+
+exportSelectionOverlay.addEventListener("pointercancel", (event) => {
+  if (!exportSelectionDragState || event.pointerId !== exportSelectionDragState.pointerId) {
+    return;
+  }
+
+  event.preventDefault();
+  setExportSelectionMode(false);
+});
+
+document.body.append(leftDock, rightDock, viewGizmo, importInput, exportSelectionOverlay);
 
 preview = new ElementPreview(previewViewport);
 openCreateInspector(ELEMENT_TYPES.tensor, editor);
+setExportCrop(null);
+setExportSelectionMode(false);
 app.start();
 
 window.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && uiState.exportSelectionMode) {
+    setExportSelectionMode(false);
+    return;
+  }
+
   const key = typeof event.key === "string" ? event.key.toLowerCase() : "";
   const isUndoKey = (event.metaKey || event.ctrlKey) && !event.shiftKey && !event.altKey && key === "z";
 
@@ -1966,4 +2301,8 @@ window.addEventListener("keydown", (event) => {
   if (editor.undo()) {
     event.preventDefault();
   }
+});
+
+window.addEventListener("resize", () => {
+  updateExportSelectionVisuals();
 });
