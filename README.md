@@ -44,6 +44,14 @@ npm run build
 npm run preview
 ```
 
+## Deploy (GitHub Pages)
+
+After pushing to `main`, GitHub Actions deploys this app to:
+
+- https://Mister-JP.github.io/procedural-architecture-diagram/
+
+If this is your first deploy, enable **Settings -> Pages -> Source: GitHub Actions** in the repository.
+
 ## JSON Document
 
 The editor persists architecture as a JSON document:
