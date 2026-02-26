@@ -1,5 +1,7 @@
 # Neural Architecture Editor (Three.js)
 
+Access it here: https://Mister-JP.github.io/procedural-architecture-diagram/
+
 Interactive Three.js editor for composing neural-network style diagrams from reusable primitives and storing the full architecture as JSON.
 
 ## What You Can Do
@@ -43,14 +45,6 @@ npm run dev
 npm run build
 npm run preview
 ```
-
-## Deploy (GitHub Pages)
-
-After pushing to `main`, GitHub Actions deploys this app to:
-
-- https://Mister-JP.github.io/procedural-architecture-diagram/
-
-If this is your first deploy, enable **Settings -> Pages -> Source: GitHub Actions** in the repository.
 
 ## JSON Document
 
