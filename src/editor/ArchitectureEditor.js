@@ -289,7 +289,7 @@ export class ArchitectureEditor {
 
     if (!preserveCamera) {
       this.app.camera.position.set(...this.document.scene.cameraPosition);
-      this.app.controls.target.set(0, 0, 0);
+      this.app.controls.target.set(...this.document.scene.cameraTarget);
       this.app.controls.update();
     }
 
@@ -1476,7 +1476,8 @@ export class ArchitectureEditor {
       version: 1,
       scene: {
         background: this.document.scene.background,
-        cameraPosition: [this.app.camera.position.x, this.app.camera.position.y, this.app.camera.position.z]
+        cameraPosition: [this.app.camera.position.x, this.app.camera.position.y, this.app.camera.position.z],
+        cameraTarget: [this.app.controls.target.x, this.app.controls.target.y, this.app.controls.target.z]
       },
       elements: []
     };

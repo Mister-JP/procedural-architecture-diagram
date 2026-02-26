@@ -15,6 +15,93 @@ function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
 
+function sanitizeFileNameSegment(value, fallback = "architecture") {
+  if (typeof value !== "string") {
+    return fallback;
+  }
+
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-{2,}/g, "-");
+
+  if (!normalized) {
+    return fallback;
+  }
+
+  return normalized.slice(0, 48);
+}
+
+function getSmartArchitectureBaseName(documentData) {
+  const elements = Array.isArray(documentData?.elements) ? documentData.elements : [];
+  const genericNames = new Set([
+    "tensor",
+    "arrow",
+    "label",
+    "frustum",
+    "layer label",
+    "flow arrow",
+    "input tensor"
+  ]);
+
+  for (const element of elements) {
+    const candidates = [element?.name];
+    if (element?.type === "label") {
+      candidates.push(element?.data?.text);
+    }
+
+    for (const candidate of candidates) {
+      if (typeof candidate !== "string") {
+        continue;
+      }
+      const trimmed = candidate.trim();
+      if (!trimmed) {
+        continue;
+      }
+      if (genericNames.has(trimmed.toLowerCase())) {
+        continue;
+      }
+      return sanitizeFileNameSegment(trimmed);
+    }
+  }
+
+  return "architecture";
+}
+
+function formatDatePart(value) {
+  return String(value).padStart(2, "0");
+}
+
+function buildSmartArchitectureFileName(documentData) {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = formatDatePart(now.getMonth() + 1);
+  const day = formatDatePart(now.getDate());
+  const hour = formatDatePart(now.getHours());
+  const minute = formatDatePart(now.getMinutes());
+
+  const baseName = getSmartArchitectureBaseName(documentData);
+  const elementCount = Array.isArray(documentData?.elements) ? documentData.elements.length : 0;
+
+  return `${baseName}-${elementCount}el-${year}${month}${day}-${hour}${minute}.json`;
+}
+
+function resolveUserFileName(defaultName) {
+  const enteredName = window.prompt("Save architecture as:", defaultName);
+  if (enteredName == null) {
+    return null;
+  }
+
+  const trimmedName = enteredName.trim();
+  if (!trimmedName) {
+    return defaultName;
+  }
+
+  return trimmedName.toLowerCase().endsWith(".json") ? trimmedName : `${trimmedName}.json`;
+}
+
 function downloadTextFile(content, fileName, mimeType = "application/json") {
   const blob = new Blob([content], { type: mimeType });
   const objectUrl = URL.createObjectURL(blob);
@@ -1053,71 +1140,6 @@ function renderTensorInspector(editor) {
       syncDraftAndPreview(editor);
     }
   });
-  addTextField(inspectorFields, {
-    label: "Target Id (manual)",
-    value: tensor.convolution.targetTensorId,
-    placeholder: "tensor-id",
-    onInput: (value) => {
-      uiState.draftElement.data.convolution.targetTensorId = value.trim();
-      syncDraftAndPreview(editor);
-    }
-  });
-  addNumberField(inspectorFields, {
-    label: "Branch Order",
-    value: tensor.convolution.branchOrder,
-    min: 0,
-    max: 24,
-    step: 1,
-    integer: true,
-    onInput: (value) => {
-      uiState.draftElement.data.convolution.branchOrder = value;
-      syncDraftAndPreview(editor);
-    }
-  });
-  addNumberField(inspectorFields, {
-    label: "Branch Spacing",
-    value: tensor.convolution.layout.branchSpacing,
-    min: 0,
-    max: 4,
-    step: 0.05,
-    onInput: (value) => {
-      uiState.draftElement.data.convolution.layout.branchSpacing = value;
-      syncDraftAndPreview(editor);
-    }
-  });
-  addNumberField(inspectorFields, {
-    label: "Branch Offset X",
-    value: tensor.convolution.layout.branchOffset[0],
-    min: -500,
-    max: 500,
-    step: 0.25,
-    onInput: (value) => {
-      uiState.draftElement.data.convolution.layout.branchOffset[0] = value;
-      syncDraftAndPreview(editor);
-    }
-  });
-  addNumberField(inspectorFields, {
-    label: "Branch Offset Y",
-    value: tensor.convolution.layout.branchOffset[1],
-    min: -500,
-    max: 500,
-    step: 0.25,
-    onInput: (value) => {
-      uiState.draftElement.data.convolution.layout.branchOffset[1] = value;
-      syncDraftAndPreview(editor);
-    }
-  });
-  addNumberField(inspectorFields, {
-    label: "Branch Offset Z",
-    value: tensor.convolution.layout.branchOffset[2],
-    min: -500,
-    max: 500,
-    step: 0.25,
-    onInput: (value) => {
-      uiState.draftElement.data.convolution.layout.branchOffset[2] = value;
-      syncDraftAndPreview(editor);
-    }
-  });
 
   addSectionTitle(inspectorFields, "Parent Kernel");
   addNumberField(inspectorFields, {
@@ -1950,13 +1972,22 @@ sceneSection.append(sceneHeading, backgroundRow, exportResolutionRow, exportRegi
 const fileActions = document.createElement("div");
 fileActions.className = "button-row";
 
-const exportJsonButton = createButton("Export JSON", { className: "tool-button compact" });
+const exportJsonButton = createButton("Save", { className: "tool-button compact" });
 exportJsonButton.addEventListener("click", () => {
   const exported = editor.exportDocument();
-  downloadTextFile(JSON.stringify(exported, null, 2), "architecture.json", "application/json");
+  const suggestedName = buildSmartArchitectureFileName(exported);
+  const fileName = resolveUserFileName(suggestedName);
+  if (!fileName) {
+    return;
+  }
+  downloadTextFile(
+    JSON.stringify(exported, null, 2),
+    fileName,
+    "application/json"
+  );
 });
 
-const importJsonButton = createButton("Import JSON", { className: "tool-button compact" });
+const importJsonButton = createButton("Load", { className: "tool-button compact" });
 importJsonButton.addEventListener("click", () => {
   importInput.click();
 });
@@ -1995,9 +2026,21 @@ importInput.addEventListener("change", async () => {
     const text = await file.text();
     const parsed = JSON.parse(text);
     const normalized = normalizeDocument(parsed);
-    editor.loadDocument(normalized, { selectFirst: true, emitDocumentChange: true, captureUndo: true });
+    editor.loadDocument(normalized, { selectFirst: false, emitDocumentChange: true, captureUndo: true });
     backgroundInput.value = normalized.scene.background;
     setGlobalBackground(normalized.scene.background);
+
+    disableCurveHandleEditing(editor);
+    uiState.inspectorMode = "create";
+    const draft = createDefaultElement(ELEMENT_TYPES.tensor);
+    draft.transform.position = editor.getInsertionPosition(false);
+    draft.transform.rotation = [0, 0, 0];
+    setDraftElement(draft);
+    renderInspector(editor);
+
+    hideRightPanel();
+    leftPanel.classList.remove("panel-hidden");
+    leftShowButton.hidden = true;
   } catch (error) {
     window.alert(`Unable to import JSON: ${error.message}`);
   } finally {

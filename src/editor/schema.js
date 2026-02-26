@@ -11,7 +11,8 @@ export const ELEMENT_TYPES = {
 
 const DEFAULT_SCENE = {
   background: "#0f1624",
-  cameraPosition: [0, 0, 260]
+  cameraPosition: [0, 0, 260],
+  cameraTarget: [0, 0, 0]
 };
 
 const DEFAULT_TENSOR_DATA = {
@@ -457,7 +458,8 @@ export function createDefaultDocument() {
 function normalizeScene(scene) {
   return {
     background: asColor(scene?.background, DEFAULT_SCENE.background),
-    cameraPosition: asVector3(scene?.cameraPosition, DEFAULT_SCENE.cameraPosition)
+    cameraPosition: asVector3(scene?.cameraPosition, DEFAULT_SCENE.cameraPosition),
+    cameraTarget: asVector3(scene?.cameraTarget, DEFAULT_SCENE.cameraTarget)
   };
 }
 

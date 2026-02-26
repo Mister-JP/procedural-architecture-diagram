@@ -2,7 +2,8 @@
   "version": 1,
   "scene": {
     "background": "#0f1624",
-    "cameraPosition": [0, 0, 260]
+    "cameraPosition": [0, 0, 260],
+    "cameraTarget": [0, 0, 0]
   },
   "elements": [
     {
