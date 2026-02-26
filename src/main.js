@@ -9,6 +9,8 @@ import {
 } from "./editor/schema.js";
 import defaultArchitectureDocument from "./config/default-architecture.json";
 
+const MAX_EXPORT_RESOLUTION = 32768;
+
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
 }
@@ -92,7 +94,7 @@ function normalizeTensorChannelColorRanges(tensorData) {
   });
 }
 
-function toResolution(value, fallback, min = 64, max = 8192) {
+function toResolution(value, fallback, min = 64, max = MAX_EXPORT_RESOLUTION) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) {
     return fallback;
@@ -1653,7 +1655,7 @@ const exportWidthInput = document.createElement("input");
 exportWidthInput.className = "field-input";
 exportWidthInput.type = "number";
 exportWidthInput.min = "64";
-exportWidthInput.max = "8192";
+exportWidthInput.max = String(MAX_EXPORT_RESOLUTION);
 exportWidthInput.step = "1";
 exportWidthInput.value = String(uiState.exportResolution.width);
 exportWidthInput.title = "Export width in pixels";
@@ -1666,7 +1668,7 @@ const exportHeightInput = document.createElement("input");
 exportHeightInput.className = "field-input";
 exportHeightInput.type = "number";
 exportHeightInput.min = "64";
-exportHeightInput.max = "8192";
+exportHeightInput.max = String(MAX_EXPORT_RESOLUTION);
 exportHeightInput.step = "1";
 exportHeightInput.value = String(uiState.exportResolution.height);
 exportHeightInput.title = "Export height in pixels";

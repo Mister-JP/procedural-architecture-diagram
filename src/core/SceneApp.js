@@ -6,6 +6,8 @@ const DEFAULT_CAMERA_FAR = 60000;
 const MAX_CAMERA_FAR = 500000;
 const MIN_CAMERA_FAR = 30000;
 const MAX_ORBIT_DISTANCE = 120000;
+const DEFAULT_EXPORT_TILE_SIZE = 2048;
+const MAX_EXPORT_TILE_SIZE = 8192;
 
 /**
  * Small app shell that owns renderer, scene, camera, controls and resize loop.
@@ -171,6 +173,10 @@ export class SceneApp {
     const exportQuality = options.quality ?? 0.92;
     const width = Number.isFinite(options.width) ? Math.max(1, Math.round(options.width)) : null;
     const height = Number.isFinite(options.height) ? Math.max(1, Math.round(options.height)) : null;
+    const tiled = options.tiled;
+    const requestedTileSize = Number.isFinite(options.tileSize)
+      ? Math.max(1, Math.round(options.tileSize))
+      : null;
 
     const mimeType =
       format === "jpeg" || format === "jpg" ? "image/jpeg" : "image/png";
@@ -181,6 +187,36 @@ export class SceneApp {
         return this.renderer.domElement.toDataURL(mimeType, exportQuality);
       }
       return this.renderer.domElement.toDataURL(mimeType);
+    }
+
+    const maxRenderDimension = this.getMaxRenderDimension();
+    const tileSize = Math.min(
+      width,
+      height,
+      maxRenderDimension,
+      requestedTileSize ?? DEFAULT_EXPORT_TILE_SIZE,
+      MAX_EXPORT_TILE_SIZE
+    );
+    const autoTileDimensionThreshold = Math.min(maxRenderDimension, DEFAULT_EXPORT_TILE_SIZE * 2);
+
+    const shouldUseTiledPngExport =
+      mimeType === "image/png" &&
+      tileSize > 0 &&
+      (
+        tiled === true ||
+        (
+          tiled !== false &&
+          (
+            width > maxRenderDimension ||
+            height > maxRenderDimension ||
+            width > autoTileDimensionThreshold ||
+            height > autoTileDimensionThreshold
+          )
+        )
+      );
+
+    if (shouldUseTiledPngExport) {
+      return this.exportRasterTiledPng({ width, height, tileSize });
     }
 
     const previousSize = this.renderer.getSize(new THREE.Vector2());
@@ -201,6 +237,121 @@ export class SceneApp {
       }
       return this.renderer.domElement.toDataURL(mimeType);
     } finally {
+      this.renderer.setPixelRatio(previousPixelRatio);
+      this.renderer.setSize(previousSize.x, previousSize.y, false);
+      this.camera.aspect = previousAspect;
+      this.camera.updateProjectionMatrix();
+      this.renderFrame();
+    }
+  }
+
+  getMaxRenderDimension() {
+    const fallback = 4096;
+    const context = this.renderer.getContext();
+    if (!context) {
+      return fallback;
+    }
+
+    const maxTextureSize = this.renderer.capabilities?.maxTextureSize ?? fallback;
+    const maxRenderBufferSize = context.getParameter(context.MAX_RENDERBUFFER_SIZE) ?? fallback;
+    const maxViewportDims = context.getParameter(context.MAX_VIEWPORT_DIMS);
+    const maxViewportWidth = Array.isArray(maxViewportDims) || ArrayBuffer.isView(maxViewportDims)
+      ? maxViewportDims[0]
+      : fallback;
+    const maxViewportHeight = Array.isArray(maxViewportDims) || ArrayBuffer.isView(maxViewportDims)
+      ? maxViewportDims[1]
+      : fallback;
+
+    const safeValue = Math.min(
+      maxTextureSize,
+      maxRenderBufferSize,
+      maxViewportWidth,
+      maxViewportHeight
+    );
+
+    return Number.isFinite(safeValue) && safeValue > 0 ? Math.floor(safeValue) : fallback;
+  }
+
+  restoreCameraView(previousView) {
+    if (!previousView?.enabled) {
+      this.camera.clearViewOffset();
+      return;
+    }
+
+    this.camera.setViewOffset(
+      previousView.fullWidth,
+      previousView.fullHeight,
+      previousView.offsetX,
+      previousView.offsetY,
+      previousView.width,
+      previousView.height
+    );
+  }
+
+  exportRasterTiledPng({ width, height, tileSize }) {
+    const previousSize = this.renderer.getSize(new THREE.Vector2());
+    const previousPixelRatio = this.renderer.getPixelRatio();
+    const previousAspect = this.camera.aspect;
+    const previousView = this.camera.view ? { ...this.camera.view } : null;
+
+    const stitchedCanvas = document.createElement("canvas");
+    stitchedCanvas.width = width;
+    stitchedCanvas.height = height;
+
+    if (stitchedCanvas.width !== width || stitchedCanvas.height !== height) {
+      throw new Error(
+        `Requested export resolution ${width}x${height} exceeds this browser's 2D canvas limits.`
+      );
+    }
+
+    const stitchedContext = stitchedCanvas.getContext("2d", { alpha: true });
+    if (!stitchedContext) {
+      throw new Error("Unable to allocate 2D canvas context for tiled export.");
+    }
+
+    try {
+      this.renderer.setPixelRatio(1);
+      this.camera.aspect = width / height;
+      this.camera.updateProjectionMatrix();
+
+      this.controls.update();
+      this.syncCameraClipping();
+
+      for (let yOffset = 0; yOffset < height; yOffset += tileSize) {
+        const tileHeight = Math.min(tileSize, height - yOffset);
+
+        for (let xOffset = 0; xOffset < width; xOffset += tileSize) {
+          const tileWidth = Math.min(tileSize, width - xOffset);
+
+          this.renderer.setSize(tileWidth, tileHeight, false);
+          this.camera.setViewOffset(
+            width,
+            height,
+            xOffset,
+            yOffset,
+            tileWidth,
+            tileHeight
+          );
+
+          this.renderer.render(this.scene, this.camera);
+          stitchedContext.drawImage(
+            this.renderer.domElement,
+            0,
+            0,
+            tileWidth,
+            tileHeight,
+            xOffset,
+            yOffset,
+            tileWidth,
+            tileHeight
+          );
+        }
+      }
+
+      this.camera.clearViewOffset();
+      return stitchedCanvas.toDataURL("image/png");
+    } finally {
+      this.restoreCameraView(previousView);
       this.renderer.setPixelRatio(previousPixelRatio);
       this.renderer.setSize(previousSize.x, previousSize.y, false);
       this.camera.aspect = previousAspect;
