@@ -1,52 +1,69 @@
 # Architecture Guide
 
 ## Overview
-The app is now a JSON-driven editor rather than a hardcoded CNN pipeline renderer.
 
-Core modules:
-- `src/core/SceneApp.js`: renderer/camera/controls shell.
-- `src/editor/ArchitectureEditor.js`: scene element orchestration, selection, transform controls, import/export.
-- `src/editor/schema.js`: normalized document schema and defaults.
-- `src/editor/elements/BaseElement.js`: common element lifecycle contract.
-- `src/editor/elements/TensorElement.js`: tensor cuboid element built on `TensorVolume`.
-- `src/editor/TensorRelationOverlay.js`: renders parent-kernel-pyramid convolution relations between tensors.
-- `src/editor/elements/ArrowElement.js`: 3D/2D/dotted/curved arrows.
-- `src/editor/elements/LabelElement.js`: configurable sprite labels.
-- `src/editor/ElementPreview.js`: inspector-side preview renderer.
+The app is a JSON-driven Three.js editor for neural-network diagram composition. The source of truth is a normalized document (`scene` + `elements[]`) that can be edited interactively, saved, loaded, and exported as image output.
 
-## OOP Design Decisions
-- Single responsibility:
-  - Scene lifecycle in `SceneApp`.
-  - Editing orchestration in `ArchitectureEditor`.
-  - Geometry/rendering in per-element classes.
-- Composition over inheritance:
-  - Editor composes polymorphic element instances via factory + base contract.
-- Encapsulation:
-  - Element internals own geometry construction and serialization boundaries.
+## Core Modules
+
+- `src/main.js`: app bootstrap, panel UI wiring, create/edit flows, load/save/export actions, and view gizmo controls.
+- `src/core/SceneApp.js`: renderer/camera/orbit-controls shell and raster export support.
+- `src/editor/ArchitectureEditor.js`: document lifecycle, element instance management, selection, transforms, undo history, and scene overlays.
+- `src/editor/schema.js`: default document factory, per-type defaults, normalization/clamping, and element/document helpers.
+- `src/editor/elements/BaseElement.js`: common lifecycle contract for all element types.
+- `src/editor/elements/ElementFactory.js`: maps element config to concrete element class.
+- `src/editor/elements/TensorElement.js`: tensor volumes and tensor label rendering.
+- `src/editor/TensorRelationOverlay.js`: kernel + pyramid projection overlays for tensor-to-tensor convolution relationships.
+- `src/editor/elements/ArrowElement.js`: `3d`, `2d`, `dotted`, and `curved` arrows.
+- `src/editor/elements/LabelElement.js`: styled text labels.
+- `src/editor/elements/FrustumElement.js`: frustum geometry with fill/border style controls.
+- `src/editor/ElementPreview.js`: isolated inspector preview renderer.
 
 ## Data Contract
-- Source of truth is a versioned JSON document (`scene` + `elements[]`).
-- Every element has:
+
+- Document format is versioned (`DOCUMENT_VERSION` in `schema.js`).
+- Top-level keys:
+  - `scene` (`background`, `cameraPosition`, `cameraTarget`)
+  - `elements[]`
+- Every element contains:
   - `id`
-  - `type` (`tensor`, `arrow`, `label`)
+  - `type` (`tensor`, `arrow`, `label`, `frustum`)
   - `name`
   - `transform` (`position`, `rotation`)
   - `data` (type-specific payload)
-- Tensor data uses a shape-first model:
-  - `dimensions`: `{ height, width, channels }`
-  - `scale`: per-axis world units (`height`, `width`, `channel`)
-  - `convolution`: relation metadata (`parentTensorId`, kernel tensor, pyramid settings)
-- `schema.js` normalizes imports, clamps invalid values, and injects defaults.
+- `schema.js` is the normalization boundary:
+  - clamps numeric ranges
+  - sanitizes color/vector inputs
+  - enforces defaults
+  - guarantees IDs
 
 ## Interaction Model
-- Raycast click selection resolves owning element IDs from scene nodes.
-- `TransformControls` provides translate/rotate manipulation of selected elements.
-- Curved arrows expose an optional in-canvas control handle for control-point editing.
-- Convolution overlays are non-selectable scene decorations derived from tensor relations.
+
+- Selection uses raycasting and resolves owning `elementId` from intersected scene nodes.
+- `Shift+Click` toggles multi-selection.
+- `TransformControls` drives translate/rotate workflows.
+- Double-clicking a rotate axis snaps rotation to 90-degree increments.
+- Move mode provides temporary alignment guides and snapping against other selected/non-selected element anchors.
+- View gizmo supports axis alignment (`X`, `Y`, `Z`) and plane locking (`XY`, `YZ`, `XZ`) with restore back to free 3D view.
+- Curved arrows expose an optional direct control handle.
+- Tensor convolution kernels can expose an interactive kernel handle for offset editing.
+
+## Import/Export
+
+- JSON save/load uses normalized document round-tripping.
+- Load flow supports:
+  - bundled demos from `src/config/*.json`
+  - user-provided JSON files
+- Image export supports:
+  - PNG output
+  - configurable resolution
+  - optional crop selection region (aspect-ratio aware drag selection)
 
 ## Extendability
-- Add a new element type by:
-  1. Defining defaults/normalization in `schema.js`.
-  2. Creating a new `*Element` class extending `BaseElement`.
-  3. Registering it in `ElementFactory.js`.
-  4. Adding inspector controls in `main.js`.
+
+To add a new element type:
+
+1. Define defaults + normalization in `src/editor/schema.js`.
+2. Implement a new `*Element` class extending `BaseElement`.
+3. Register it in `src/editor/elements/ElementFactory.js`.
+4. Add inspector controls and create/edit flow wiring in `src/main.js`.

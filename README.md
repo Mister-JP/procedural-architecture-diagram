@@ -1,56 +1,53 @@
 # Neural Architecture Editor (Three.js)
 
-Access it here: https://Mister-JP.github.io/procedural-architecture-diagram/
+Live demo: https://Mister-JP.github.io/procedural-architecture-diagram/
 
-Interactive Three.js editor for composing neural-network style diagrams from reusable primitives and storing the full architecture as JSON.
+A JSON-driven Three.js editor for building neural-network style architecture diagrams from reusable 3D elements.
 
 ## What You Can Do
 
-- Create and style core elements:
-  - `Tensor` volumes (height/width/channels, tensor scale, translucent cube styling)
-  - `Arrow` connectors (`3d`, `2d`, `dotted`, `curved`)
-  - `Label` nodes (text, font, size, text/background/border styling)
-- Model convolution relations directly on tensors:
-  - Output tensor references its `parentTensorId`
-  - Parent kernel (`channels x k x k`) renders inside the parent tensor
-  - Pyramid/frustum projection renders from kernel to the facing plane of the output tensor
-- Move and rotate any selected element in canvas.
-- Re-open and edit any element by clicking it.
-- Duplicate selected elements.
-- Undo recent edits with `Cmd/Ctrl+Z` or the Undo button.
-- Toggle (hide/show) both side panels to maximize canvas space.
-- Export the complete architecture to JSON and import it later.
+![U-Net architecture screenshot](docs/U-Net%20Screenshot.png)
 
-## Project Structure
+- Create and style `tensor`, `arrow`, `label`, and `frustum` elements.
+- Configure tensor dimensions, scale, color gradients, per-channel color ranges, and label styling.
+- Model tensor convolution relationships using `parentTensorId` with kernel and pyramid projection overlays.
+- Use arrow variants: `3d`, `2d`, `dotted`, and `curved` (with optional direct curve handle editing).
+- Multi-select with `Shift+Click`, then move/rotate selected elements, duplicate, delete, and undo (`Cmd/Ctrl+Z`).
+- Use the view gizmo to align camera to `X/Y/Z`, lock to `XY/YZ/XZ` plane views, and return to free `3D`.
+- Use live alignment guides and snapping while moving elements.
+- Hide/show both side panels to maximize canvas space.
+- Load demo projects from `src/config/*.json` or import JSON from your computer.
+- Save JSON, reload later, and export PNG at custom resolution with optional crop region selection.
 
-- `src/main.js`: app entrypoint, panel UI wiring, create/edit flows
-- `src/editor/ArchitectureEditor.js`: selection, transforms, lifecycle, import/export
-- `src/editor/schema.js`: JSON schema defaults + normalization
-- `src/editor/elements/*`: OOP element implementations (`BaseElement`, `TensorElement`, `ArrowElement`, `LabelElement`)
-- `src/editor/TensorRelationOverlay.js`: parent tensor/kernel/pyramid relation renderer
-- `src/editor/ElementPreview.js`: right-panel preview renderer
-- `src/config/default-architecture.json`: default loaded architecture document
-- `docs/EDITOR_REFACTOR_PLAN.md`: refactor design and OO plan
-
-## Run
+## Quick Start
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Build
+## Production Build
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## JSON Document
+## Project Structure
 
-The editor persists architecture as a JSON document:
+- `src/main.js`: UI wiring, panel actions, create/edit flows, export/import interactions
+- `src/editor/ArchitectureEditor.js`: scene orchestration, selection, transforms, history, import/export
+- `src/editor/schema.js`: JSON schema defaults, normalization, and ID/document utilities
+- `src/editor/elements/*`: element implementations (`TensorElement`, `ArrowElement`, `LabelElement`, `FrustumElement`)
+- `src/editor/TensorRelationOverlay.js`: parent-kernel-pyramid relation renderer between tensors
+- `src/editor/ElementPreview.js`: inspector preview renderer
+- `src/config/default-architecture.json`: default starter document
+- `src/config/U-NetArchitecture.json`: bundled example architecture
+- `docs/ARCHITECTURE.md`: technical architecture reference
 
-- `scene`: global visual state (`background`, `cameraPosition`)
-- `elements[]`: typed nodes with `transform` + type-specific `data`
+## JSON Document Shape
 
-Document parsing is resilient: import is normalized with defaults and numeric bounds in `src/editor/schema.js`.
+- `scene`: global scene/camera metadata
+- `elements[]`: typed nodes with `id`, `type`, `name`, `transform`, and type-specific `data`
+
+Imports are normalized in `src/editor/schema.js` (defaults, clamping, and schema-safe fallback values).
