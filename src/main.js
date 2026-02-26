@@ -213,6 +213,43 @@ function drawExportSelectionBox(rect) {
   exportSelectionBox.style.height = `${rect.height}px`;
 }
 
+function getExportCropScreenRect() {
+  if (!uiState.exportCrop) {
+    return null;
+  }
+
+  const rect = getCanvasViewportRect();
+  return {
+    x: rect.left + uiState.exportCrop.x * rect.width,
+    y: rect.top + uiState.exportCrop.y * rect.height,
+    width: uiState.exportCrop.width * rect.width,
+    height: uiState.exportCrop.height * rect.height
+  };
+}
+
+function isPointInsideRect(x, y, rect) {
+  if (!rect) {
+    return false;
+  }
+  return x >= rect.x && x <= rect.x + rect.width && y >= rect.y && y <= rect.y + rect.height;
+}
+
+function isPointInsideCanvasViewport(x, y) {
+  const rect = getCanvasViewportRect();
+  return x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom;
+}
+
+function updateExportCropHoverCursor(clientX, clientY) {
+  if (uiState.exportSelectionMode || exportCropMoveDragState) {
+    return;
+  }
+
+  const cropRect = getExportCropScreenRect();
+  app.renderer.domElement.style.cursor = isPointInsideRect(clientX, clientY, cropRect)
+    ? "grab"
+    : "";
+}
+
 function updateExportSelectionVisuals() {
   if (!exportSelectionOverlay) {
     return;
@@ -228,20 +265,14 @@ function updateExportSelectionVisuals() {
     return;
   }
 
-  const rect = getCanvasViewportRect();
-  const crop = uiState.exportCrop;
+  const cropRect = getExportCropScreenRect();
 
-  if (!crop) {
+  if (!cropRect) {
     drawExportSelectionBox(null);
     return;
   }
 
-  drawExportSelectionBox({
-    x: rect.left + crop.x * rect.width,
-    y: rect.top + crop.y * rect.height,
-    width: crop.width * rect.width,
-    height: crop.height * rect.height
-  });
+  drawExportSelectionBox(cropRect);
 }
 
 function updateExportRegionUi() {
@@ -283,6 +314,7 @@ function setExportCrop(crop) {
 
 function setExportSelectionMode(enabled) {
   uiState.exportSelectionMode = Boolean(enabled);
+  app.renderer.domElement.style.cursor = "";
   if (!uiState.exportSelectionMode && exportSelectionDragState) {
     if (
       exportSelectionOverlay &&
@@ -292,6 +324,9 @@ function setExportSelectionMode(enabled) {
       exportSelectionOverlay.releasePointerCapture(exportSelectionDragState.pointerId);
     }
     exportSelectionDragState = null;
+  }
+  if (uiState.exportSelectionMode && exportCropMoveDragState) {
+    exportCropMoveDragState = null;
   }
   updateExportRegionUi();
   updateExportSelectionVisuals();
@@ -354,6 +389,7 @@ let exportSelectionOverlay;
 let exportSelectionBox;
 let exportSelectionHint;
 let exportSelectionDragState = null;
+let exportCropMoveDragState = null;
 
 function applyTransformModeButtonState(mode) {
   const isMove = mode === "translate";
@@ -2276,6 +2312,91 @@ exportSelectionOverlay.addEventListener("pointercancel", (event) => {
   event.preventDefault();
   setExportSelectionMode(false);
 });
+
+window.addEventListener("pointerdown", (event) => {
+  if (event.button !== 0 || uiState.exportSelectionMode || !uiState.exportCrop) {
+    return;
+  }
+
+  const cropRect = getExportCropScreenRect();
+  if (!isPointInsideRect(event.clientX, event.clientY, cropRect)) {
+    return;
+  }
+
+  const viewportRect = getCanvasViewportRect();
+  exportCropMoveDragState = {
+    pointerId: event.pointerId,
+    startX: event.clientX,
+    startY: event.clientY,
+    viewportRect,
+    startCrop: { ...uiState.exportCrop }
+  };
+
+  app.renderer.domElement.style.cursor = "grabbing";
+  event.preventDefault();
+}, true);
+
+window.addEventListener("pointermove", (event) => {
+  if (
+    !exportCropMoveDragState ||
+    event.pointerId !== exportCropMoveDragState.pointerId
+  ) {
+    updateExportCropHoverCursor(event.clientX, event.clientY);
+    return;
+  }
+
+  const { viewportRect, startX, startY, startCrop } = exportCropMoveDragState;
+  const deltaX = (event.clientX - startX) / Math.max(1, viewportRect.width);
+  const deltaY = (event.clientY - startY) / Math.max(1, viewportRect.height);
+
+  const nextX = Math.min(1 - startCrop.width, Math.max(0, startCrop.x + deltaX));
+  const nextY = Math.min(1 - startCrop.height, Math.max(0, startCrop.y + deltaY));
+
+  setExportCrop({
+    x: nextX,
+    y: nextY,
+    width: startCrop.width,
+    height: startCrop.height
+  });
+
+  app.renderer.domElement.style.cursor = "grabbing";
+  event.preventDefault();
+}, true);
+
+window.addEventListener("pointerup", (event) => {
+  if (!exportCropMoveDragState || event.pointerId !== exportCropMoveDragState.pointerId) {
+    return;
+  }
+
+  exportCropMoveDragState = null;
+  updateExportCropHoverCursor(event.clientX, event.clientY);
+  event.preventDefault();
+}, true);
+
+window.addEventListener("pointercancel", (event) => {
+  if (!exportCropMoveDragState || event.pointerId !== exportCropMoveDragState.pointerId) {
+    return;
+  }
+
+  exportCropMoveDragState = null;
+  app.renderer.domElement.style.cursor = "";
+}, true);
+
+window.addEventListener("contextmenu", (event) => {
+  if (!uiState.exportCrop || !isPointInsideCanvasViewport(event.clientX, event.clientY)) {
+    return;
+  }
+
+  const cropRect = getExportCropScreenRect();
+  if (isPointInsideRect(event.clientX, event.clientY, cropRect)) {
+    return;
+  }
+
+  setExportSelectionMode(false);
+  setExportCrop(null);
+  app.renderer.domElement.style.cursor = "";
+  event.preventDefault();
+}, true);
 
 document.body.append(leftDock, rightDock, viewGizmo, importInput, exportSelectionOverlay);
 
