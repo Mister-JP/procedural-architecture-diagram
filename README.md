@@ -6,7 +6,7 @@ A JSON-driven Three.js editor for building neural-network style architecture dia
 
 ## What You Can Do
 
-![U-Net architecture screenshot](docs/U-Net%20Screenshot.png)
+![U-Net architecture screenshot](docs/U-Net-screenshot.png)
 
 - Create and style `tensor`, `arrow`, `label`, and `frustum` elements.
 - Configure tensor dimensions, scale, color gradients, per-channel color ranges, and label styling.
